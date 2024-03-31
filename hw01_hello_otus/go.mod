@@ -1,4 +1,4 @@
-module github.com/DimVlas/hw01_hello_otus
+module github.com/DimVlas/otus_hw/hw01_hello_otus
 
 go 1.19
 
