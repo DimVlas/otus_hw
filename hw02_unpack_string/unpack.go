@@ -3,7 +3,6 @@ package hw02unpackstring
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -20,7 +19,12 @@ var (
 
 // True - если руна является цифрой.
 func IsDigit(r rune) bool {
-	return slices.Contains(nums, r)
+	for _, num := range nums {
+		if num == r {
+			return true
+		}
+	}
+	return false
 }
 
 func Unpack(text string) (string, error) {
@@ -47,7 +51,7 @@ func Unpack(text string) (string, error) {
 				return "", ErrInvalidString
 			}
 
-			if !IsDigit(runes[i+1]) && runes[i+1] != bslash { // следующий символ не цифра ине слэш
+			if !IsDigit(runes[i+1]) && runes[i+1] != bslash { // следующий символ не цифра и не слэш
 				return "", ErrInvalidString
 			}
 
