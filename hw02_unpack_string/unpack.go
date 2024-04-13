@@ -14,6 +14,8 @@ var (
 	nums = []rune{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 
 	numZero = '0'
+
+	bslash = '\\'
 )
 
 // True - если руна является цифрой.
@@ -38,6 +40,18 @@ func Unpack(text string) (string, error) {
 	for i := 0; i < lenRunes; i++ {
 		if IsDigit(runes[i]) {
 			return "", ErrInvalidString
+		}
+
+		if runes[i] == bslash { // текущий символ слэш
+			if i == lenRunes-1 { // это последний символ
+				return "", ErrInvalidString
+			}
+
+			if !IsDigit(runes[i+1]) && runes[i+1] != bslash { // следующий символ не цифра ине слэш
+				return "", ErrInvalidString
+			}
+
+			i++ // нужно обработать следующий символ как обычный
 		}
 
 		if i == lenRunes-1 { // это последний символ
