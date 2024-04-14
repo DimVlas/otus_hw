@@ -80,3 +80,79 @@ func TestTop10(t *testing.T) {
 		}
 	})
 }
+
+func TestGetWords(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{input: "", expected: []string{}},
+		{input: "alfa beta   gamma    ", expected: []string{"alfa", "beta", "gamma"}},
+		{
+			input: `Предложения  	складываются в абзацы — 
+			и вы наслаждетесь очередным бредошедевром.`,
+			expected: []string{
+				"Предложения",
+				"складываются",
+				"в",
+				"абзацы",
+				"—",
+				"и",
+				"вы",
+				"наслаждетесь",
+				"очередным",
+				"бредошедевром.",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			result := GetWords(tc.input)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestCountOfElements(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected map[string]int
+	}{
+		{
+			name:     "empty",
+			input:    []string{},
+			expected: map[string]int{},
+		},
+		{
+			name:  "all_one",
+			input: []string{"alfa", "beta", "gamma"},
+			expected: map[string]int{
+				"alfa":  1,
+				"beta":  1,
+				"gamma": 1,
+			},
+		},
+		{
+			name:  "second_two",
+			input: []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама"},
+			expected: map[string]int{
+				"Мама":  1,
+				"мыла":  2,
+				"раму,": 1,
+				"раму":  1,
+				"мама":  1,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			result := CountOfElements(tc.input)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
