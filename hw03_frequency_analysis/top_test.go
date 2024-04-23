@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -81,22 +81,24 @@ func TestTop10(t *testing.T) {
 	})
 }
 
-func TestGetWords(t *testing.T) {
+func TestSplitWords(t *testing.T) {
 	tests := []struct {
+		name     string
 		input    string
 		expected []string
 	}{
-		{input: "", expected: []string{}},
-		{input: "alfa beta   gamma    ", expected: []string{"alfa", "beta", "gamma"}},
+		{name: "empty", input: "", expected: []string{}},
+		{name: "en", input: "alfa beta   gamma    ", expected: []string{"alfa", "beta", "gamma"}},
 		{
-			input: `Предложения  	складываются в абзацы — 
+			name: "ru",
+			input: `Предложения  	складываются в абзацы - 
 			и вы наслаждетесь очередным бредошедевром.`,
 			expected: []string{
 				"Предложения",
 				"складываются",
 				"в",
 				"абзацы",
-				"—",
+				"-",
 				"и",
 				"вы",
 				"наслаждетесь",
@@ -108,42 +110,42 @@ func TestGetWords(t *testing.T) {
 
 	for _, tc := range tests {
 		tc := tc
-		t.Run(tc.input, func(t *testing.T) {
-			result := GetWords(tc.input)
+		t.Run(tc.name, func(t *testing.T) {
+			result := splitWords(tc.input)
 			require.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-func TestCountOfElements(t *testing.T) {
+func TestWordsWidthsSort(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    []string
-		expected map[string]int
+		expected []wordWidth
 	}{
 		{
 			name:     "empty",
 			input:    []string{},
-			expected: map[string]int{},
+			expected: []wordWidth{},
 		},
 		{
-			name:  "all_one",
+			name:  "en. all_one",
 			input: []string{"alfa", "beta", "gamma"},
-			expected: map[string]int{
-				"alfa":  1,
-				"beta":  1,
-				"gamma": 1,
+			expected: []wordWidth{
+				{Word: "alfa", Width: 1},
+				{Word: "beta", Width: 1},
+				{Word: "gamma", Width: 1},
 			},
 		},
 		{
 			name:  "second_two",
 			input: []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама"},
-			expected: map[string]int{
-				"Мама":  1,
-				"мыла":  2,
-				"раму,": 1,
-				"раму":  1,
-				"мама":  1,
+			expected: []wordWidth{
+				{"мыла", 2},
+				{"Мама", 1},
+				{"мама", 1},
+				{"раму", 1},
+				{"раму,", 1},
 			},
 		},
 	}
@@ -151,7 +153,7 @@ func TestCountOfElements(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			result := CountOfElements(tc.input)
+			result := wordsWidthsSort(tc.input, !taskWithAsteriskIsCompleted)
 			require.Equal(t, tc.expected, result)
 		})
 	}
