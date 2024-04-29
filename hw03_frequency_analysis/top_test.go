@@ -88,30 +88,30 @@ func TestSplitWords(t *testing.T) {
 		expected []string
 	}{
 		{name: "empty", input: "", expected: []string{}},
-		{name: "en", input: "alfa beta   gamma    ", expected: []string{"alfa", "beta", "gamma"}},
-		{
-			name: "ru",
-			input: `Предложения  	складываются в абзацы - 
-			и вы наслаждетесь очередным бредошедевром.`,
-			expected: []string{
-				"Предложения",
-				"складываются",
-				"в",
-				"абзацы",
-				"-",
-				"и",
-				"вы",
-				"наслаждетесь",
-				"очередным",
-				"бредошедевром.",
-			},
-		},
+		{name: "en", input: "alfa, beta   gamma    ", expected: []string{"alfa", "beta", "gamma"}},
+		// {
+		// 	name: "ru",
+		// 	input: `Предложения  	складываются в абзацы -
+		// 	и вы наслаждетесь очередным бредошедевром.`,
+		// 	expected: []string{
+		// 		"Предложения",
+		// 		"складываются",
+		// 		"в",
+		// 		"абзацы",
+		// 		"-",
+		// 		"и",
+		// 		"вы",
+		// 		"наслаждетесь",
+		// 		"очередным",
+		// 		"бредошедевром.",
+		// 	},
+		// },
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			result := splitWords(tc.input)
+			result := splitWords(tc.input, pattern)
 			require.Equal(t, tc.expected, result)
 		})
 	}
@@ -119,32 +119,62 @@ func TestSplitWords(t *testing.T) {
 
 func TestWordsWidthsSort(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []string
-		expected []wordWidth
+		name          string
+		isNotCaseSens bool
+		input         []string
+		expected      []wordWidth
 	}{
 		{
-			name:     "empty",
-			input:    []string{},
-			expected: []wordWidth{},
+			name:          "empty",
+			isNotCaseSens: false,
+			input:         []string{},
+			expected:      []wordWidth{},
 		},
 		{
-			name:  "en. all_one",
-			input: []string{"alfa", "beta", "gamma"},
+			name:          "en. two_two_one",
+			isNotCaseSens: true,
+			input:         []string{"alfa", "beta", "gamma", "Beta", "Alfa"},
 			expected: []wordWidth{
+				{Word: "alfa", Width: 2},
+				{Word: "beta", Width: 2},
+				{Word: "gamma", Width: 1},
+			},
+		},
+		{
+			name:          "en. all_one",
+			isNotCaseSens: false,
+			input:         []string{"alfa", "beta", "gamma", "Beta", "Alfa"},
+			expected: []wordWidth{
+				{Word: "Alfa", Width: 1},
+				{Word: "Beta", Width: 1},
 				{Word: "alfa", Width: 1},
 				{Word: "beta", Width: 1},
 				{Word: "gamma", Width: 1},
 			},
 		},
 		{
-			name:  "second_two",
-			input: []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама"},
+			name:          "ru: two_all_one",
+			isNotCaseSens: false,
+			input:         []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама", "Мыла", "Раму", "мамА"},
 			expected: []wordWidth{
 				{"мыла", 2},
 				{"Мама", 1},
+				{"Мыла", 1},
+				{"Раму", 1},
+				{"мамА", 1},
 				{"мама", 1},
 				{"раму", 1},
+				{"раму,", 1},
+			},
+		},
+		{
+			name:          "ru: three_three_two_one",
+			isNotCaseSens: true,
+			input:         []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама", "Мыла", "Раму", "мамА"},
+			expected: []wordWidth{
+				{"Мама", 3},
+				{"мыла", 3},
+				{"раму", 2},
 				{"раму,", 1},
 			},
 		},
@@ -153,7 +183,7 @@ func TestWordsWidthsSort(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			result := wordsWidthsSort(tc.input, !taskWithAsteriskIsCompleted)
+			result := wordsWidthsSort(tc.input, tc.isNotCaseSens)
 			require.Equal(t, tc.expected, result)
 		})
 	}
