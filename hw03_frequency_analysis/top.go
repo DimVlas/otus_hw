@@ -2,9 +2,15 @@ package hw03frequencyanalysis
 
 import (
 	"regexp"
-	"slices"
 	"sort"
 	"strings"
+)
+
+var (
+	// Дополнительное задание: не учитывать регистр букв и знаки препинания по краям слова.
+	isAsteriksTask = true
+	patt           = `[a-zA-Zа-яА-Я0-9]+[\.\-\,]*[a-zA-Zа-яА-Я0-9]+|\-{2,}|[a-zA-Zа-яА-Я0-9]+`
+	pattern        = regexp.MustCompile(patt)
 )
 
 // Разбивает текст на слова, возвращает срез слов.
@@ -15,19 +21,16 @@ func splitWords(text string, pattern *regexp.Regexp) []string {
 
 	if pattern == nil {
 		return strings.Fields(text)
-	} else {
-		//res := pattern.Split(text, -1)
-		return slices.DeleteFunc(pattern.Split(text, -1), func(s string) bool {
-			return len(s) == 0
-		})
 	}
+
+	return pattern.FindAllString(text, -1)
 }
 
 // Считает частоту элементов в строковом срезе.
 // Возвращает slice структур wordWidth - слова с их весами.
-// Slice отсортирован в зависимости от веса
-// isNotCaseSens - true, не учитывать регистр
-func wordsWidthsSort(s []string, isNotCaseSens bool) []wordWidth {
+// Slice отсортирован в зависимости от веса.
+// isIgnoreCase - true, не учитывать регистр.
+func wordsWidthsSort(s []string, isIgnoreCase bool) []wordWidth {
 	if len(s) < 1 {
 		return []wordWidth{}
 	}
@@ -36,15 +39,15 @@ func wordsWidthsSort(s []string, isNotCaseSens bool) []wordWidth {
 
 	for _, w := range s {
 		word := w
-		if isNotCaseSens {
-			word = strings.ToUpper(word)
+		if isIgnoreCase {
+			word = strings.ToLower(word)
 		}
 
 		if width, ok := m[word]; ok {
 			width.Width++
 			m[word] = width
 		} else {
-			m[word] = wordWidth{Word: w, Width: 1}
+			m[word] = wordWidth{Word: word, Width: 1}
 		}
 	}
 
@@ -61,29 +64,28 @@ func wordsWidthsSort(s []string, isNotCaseSens bool) []wordWidth {
 	return ww
 }
 
-// Слово с его весом
+// Слово с его весом.
 type wordWidth struct {
 	Word  string
 	Width int
 }
-
-// func (w wordWidth) GetKey() string {
-// 	return fmt.Sprintf("%04d%s", w.Width, w.Word)
-// }
-
-var pattern *regexp.Regexp = regexp.MustCompile(`[\s,.]+`) //"(?U)\\W+".
 
 func Top10(text string) []string {
 	if len(text) < 1 {
 		return []string{}
 	}
 
-	words := splitWords(text, pattern)
+	var words []string
+	if isAsteriksTask {
+		words = splitWords(text, pattern)
+	} else {
+		words = splitWords(text, nil)
+	}
 	if len(words) < 1 {
 		return []string{}
 	}
 
-	widths := wordsWidthsSort(words, false)
+	widths := wordsWidthsSort(words, isAsteriksTask)
 
 	res := make([]string, 0, 10)
 
