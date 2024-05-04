@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = isAsteriksTask
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -79,4 +79,156 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+}
+
+func TestSplitWords(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expected    []string
+		expectedReg []string
+	}{
+		{name: "empty", input: "", expected: []string{}, expectedReg: []string{}},
+		{
+			name:  "en.dog_cat",
+			input: "dog,    cat; dog,,,cat	dog...cat ,dog - cat",
+			expected: []string{
+				"dog,",
+				"cat;",
+				"dog,,,cat",
+				"dog...cat",
+				",dog",
+				"-",
+				"cat",
+			},
+			expectedReg: []string{
+				"dog",
+				"cat",
+				"dog,,,cat",
+				"dog...cat",
+				"dog",
+				"cat",
+			},
+		},
+		{
+			name: "ru.text",
+			input: `Предложения  	складываются в абзацы -
+			и вы...мы наслаждаетесь	каким-то	очередным ------ бредошедевром?`,
+			expected: []string{
+				"Предложения",
+				"складываются",
+				"в",
+				"абзацы",
+				"-", "и",
+				"вы...мы",
+				"наслаждаетесь",
+				"каким-то",
+				"очередным",
+				"------",
+				"бредошедевром?",
+			},
+			expectedReg: []string{
+				"Предложения",
+				"складываются",
+				"в",
+				"абзацы",
+				"и",
+				"вы...мы",
+				"наслаждаетесь",
+				"каким-то",
+				"очередным",
+				"------",
+				"бредошедевром",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			var result []string
+			if taskWithAsteriskIsCompleted {
+				result = splitWords(tc.input, pattern)
+				require.Equal(t, tc.expectedReg, result)
+			} else {
+				result = splitWords(tc.input, nil)
+				require.Equal(t, tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestWordsWidthsSort(t *testing.T) {
+	tests := []struct {
+		name               string
+		input              []string
+		expected           []wordWidth
+		expectedIgnoreCase []wordWidth
+	}{
+		{
+			name:               "empty",
+			input:              []string{},
+			expected:           []wordWidth{},
+			expectedIgnoreCase: []wordWidth{},
+		},
+		{
+			name:  "en",
+			input: []string{"alfa", "beta", "gamma", "Beta", "Alfa"},
+			expected: []wordWidth{
+				{Word: "Alfa", Width: 1},
+				{Word: "Beta", Width: 1},
+				{Word: "alfa", Width: 1},
+				{Word: "beta", Width: 1},
+				{Word: "gamma", Width: 1},
+			},
+			expectedIgnoreCase: []wordWidth{
+				{Word: "alfa", Width: 2},
+				{Word: "beta", Width: 2},
+				{Word: "gamma", Width: 1},
+			},
+		},
+		{
+			name:  "ru",
+			input: []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама", "Мыла", "Раму", "мамА"},
+			expected: []wordWidth{
+				{"мыла", 2},
+				{"Мама", 1},
+				{"Мыла", 1},
+				{"Раму", 1},
+				{"мамА", 1},
+				{"мама", 1},
+				{"раму", 1},
+				{"раму,", 1},
+			},
+			expectedIgnoreCase: []wordWidth{
+				{"мама", 3},
+				{"мыла", 3},
+				{"раму", 2},
+				{"раму,", 1},
+			},
+		},
+		// {
+		// 	name:          "ru: three_three_two_one",
+		// 	isNotCaseSens: true,
+		// 	input:         []string{"Мама", "мыла", "раму,", "раму", "мыла", "мама", "Мыла", "Раму", "мамА"},
+		// 	expected: []wordWidth{
+		// 		{"Мама", 3},
+		// 		{"мыла", 3},
+		// 		{"раму", 2},
+		// 		{"раму,", 1},
+		// 	},
+		// },
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			result := wordsWidthsSort(tc.input, taskWithAsteriskIsCompleted)
+			if taskWithAsteriskIsCompleted {
+				require.Equal(t, tc.expectedIgnoreCase, result)
+			} else {
+				require.Equal(t, tc.expected, result)
+			}
+		})
+	}
 }
