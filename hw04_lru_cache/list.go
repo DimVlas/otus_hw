@@ -1,15 +1,13 @@
 package hw04lrucache
 
-import "sync"
-
 type List interface {
-	Len() int
-	Front() *ListItem
-	Back() *ListItem
-	PushFront(v interface{}) *ListItem
-	PushBack(v interface{}) *ListItem
-	Remove(i *ListItem)
-	MoveToFront(i *ListItem)
+	Len() int                          // Кол-во элементов в списке.
+	Front() *ListItem                  // Первый элемент списка.
+	Back() *ListItem                   // Последний элемент списка.
+	PushFront(v interface{}) *ListItem // Добавление элемента в начало списка.
+	PushBack(v interface{}) *ListItem  // Добавление элемента в конец списка.
+	Remove(i *ListItem)                // Удаление элемента из списка.
+	MoveToFront(i *ListItem)           // Переместить элемент вперед.
 }
 
 type ListItem struct {
@@ -24,27 +22,28 @@ type list struct {
 	back  *ListItem
 }
 
-// Кол-во элементов в списке
+// Создать новый двусвязный список.
+func NewList() List {
+	return new(list)
+}
+
+// Кол-во элементов в списке.
 func (lst *list) Len() int {
 	return lst.len
 }
 
-// Первый элемент списка
+// Первый элемент списка.
 func (lst *list) Front() *ListItem {
 	return lst.front
 }
 
-// Последний элемент списка
+// Последний элемент списка.
 func (lst *list) Back() *ListItem {
 	return lst.back
 }
 
-// Добавление элемента в начало списка
+// Добавление элемента в начало списка.
 func (lst *list) PushFront(v interface{}) *ListItem {
-	var mtx sync.Mutex
-	defer mtx.Unlock()
-
-	mtx.Lock()
 	itm := &ListItem{
 		Value: v,
 		Next:  lst.front,
@@ -61,12 +60,8 @@ func (lst *list) PushFront(v interface{}) *ListItem {
 	return itm
 }
 
-// Добавление элемента в конец списка
+// Добавление элемента в конец списка.
 func (lst *list) PushBack(v interface{}) *ListItem {
-	var mtx sync.Mutex
-	defer mtx.Unlock()
-
-	mtx.Lock()
 	itm := &ListItem{
 		Value: v,
 		Prev:  lst.back,
@@ -83,16 +78,11 @@ func (lst *list) PushBack(v interface{}) *ListItem {
 	return itm
 }
 
-// Удаление элемента из списка
+// Удаление элемента из списка.
 func (lst *list) Remove(i *ListItem) {
-	var mtx sync.Mutex
-
 	if i == nil {
 		return
 	}
-
-	mtx.Lock()
-	defer mtx.Unlock()
 
 	if i.Prev == nil && i.Next == nil { // единственный элемент
 		lst.front = nil
@@ -120,16 +110,11 @@ func (lst *list) Remove(i *ListItem) {
 	lst.len--
 }
 
-// переместить элемент вперед
+// Переместить элемент вперед.
 func (lst *list) MoveToFront(i *ListItem) {
 	if i.Prev == nil { // первый элемент
 		return
 	}
-
-	var mtx sync.Mutex
-	defer mtx.Unlock()
-
-	mtx.Lock()
 
 	if i.Next != nil { // элемент из середины
 		i.Prev.Next = i.Next // предыдущий ссылается на следующий
@@ -143,10 +128,4 @@ func (lst *list) MoveToFront(i *ListItem) {
 	i.Next = lst.front
 	lst.front = i
 	i.Next.Prev = i
-
-}
-
-// Создать новый двусвязный список
-func NewList() List {
-	return new(list)
 }

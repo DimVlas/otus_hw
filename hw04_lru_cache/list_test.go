@@ -31,7 +31,6 @@ func TestList(t *testing.T) {
 		require.Equal(t, 0, l.Len())
 		require.Nil(t, l.Front())
 		require.Nil(t, l.Back())
-
 	})
 
 	t.Run("single back", func(t *testing.T) {
@@ -70,7 +69,6 @@ func TestList(t *testing.T) {
 		require.Equal(t, 33, l.Front().Value)
 		require.Equal(t, 22, l.Front().Next.Value)
 		require.Equal(t, 11, l.Back().Value)
-
 	})
 
 	t.Run("complex", func(t *testing.T) {
