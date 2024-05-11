@@ -15,17 +15,80 @@ func TestList(t *testing.T) {
 		require.Nil(t, l.Back())
 	})
 
+	t.Run("single front", func(t *testing.T) {
+		l := NewList()
+
+		const testVal string = "TestValue"
+		l.PushFront(testVal)
+		first := l.Front()
+		last := l.Back()
+
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, first, last)
+		require.Equal(t, testVal, last.Value)
+
+		l.Remove(l.Front())
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+
+	})
+
+	t.Run("single back", func(t *testing.T) {
+		l := NewList()
+
+		const testVal string = "TestValue"
+		l.PushBack(testVal)
+		first := l.Front()
+		last := l.Back()
+
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, first, last)
+		require.Equal(t, testVal, last.Value)
+
+		l.Remove(l.Back())
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+	})
+
+	t.Run("move to front", func(t *testing.T) {
+		l := NewList()
+
+		l.PushBack(11)
+		l.PushBack(22)
+		l.PushBack(33)
+		require.Equal(t, 3, l.Len())
+
+		require.Equal(t, 11, l.Front().Value)
+		require.Equal(t, 22, l.Back().Prev.Value)
+		require.Equal(t, 33, l.Back().Value)
+
+		l.MoveToFront(l.Front().Next)
+		l.MoveToFront(l.Back())
+
+		require.Equal(t, 33, l.Front().Value)
+		require.Equal(t, 22, l.Front().Next.Value)
+		require.Equal(t, 11, l.Back().Value)
+
+	})
+
 	t.Run("complex", func(t *testing.T) {
 		l := NewList()
 
 		l.PushFront(10) // [10]
 		l.PushBack(20)  // [10, 20]
 		l.PushBack(30)  // [10, 20, 30]
+
 		require.Equal(t, 3, l.Len())
 
 		middle := l.Front().Next // 20
-		l.Remove(middle)         // [10, 30]
+		require.Equal(t, 20, middle.Value)
+
+		l.Remove(middle) // [10, 30]
 		require.Equal(t, 2, l.Len())
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, 30, l.Back().Value)
 
 		for i, v := range [...]int{40, 50, 60, 70, 80} {
 			if i%2 == 0 {
