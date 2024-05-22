@@ -3,7 +3,6 @@ package hw05parallelexecution
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"sync/atomic"
 	"testing"
@@ -178,7 +177,6 @@ func TestRunChan(t *testing.T) {
 		workersCount := 10
 		maxErrorsCount := 23
 		err := RunChan(tasks, workersCount, maxErrorsCount)
-		log.Println(err)
 
 		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
 		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
