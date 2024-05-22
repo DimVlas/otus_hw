@@ -1,6 +1,6 @@
-module github.com/fixme_my_friend/hw05_parallel_execution
+module github.com/DimVlas/otus_hw/hw05_parallel_execution
 
-go 1.19
+go 1.22.2
 
 require (
 	github.com/stretchr/testify v1.7.0
