@@ -22,10 +22,8 @@ func Run(tasks []Task, n, m int) error {
 		return ErrErrorsLimitExceeded
 	}
 
-	workerMaxCount := n
-	// если кол-во задач меньше кол-ва воркеров, ограничиваем кол-во воркеров
-	if len(tasks) < n {
-		workerMaxCount = len(tasks)
+	if len(tasks) < n { // если кол-во задач меньше кол-ва воркеров, ограничиваем кол-во воркеров
+		n = len(tasks)
 	}
 
 	tasksCh := make(chan Task)       // канал задач.
@@ -43,7 +41,7 @@ func Run(tasks []Task, n, m int) error {
 	}()
 
 	// запускаем воркеры
-	for i := 0; i < workerMaxCount; i++ {
+	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go doWork(&wg, tasksCh, errorCh)
 	}
