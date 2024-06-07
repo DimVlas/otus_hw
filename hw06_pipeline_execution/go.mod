@@ -1,4 +1,4 @@
-module github.com/fixme_my_friend/hw06_pipeline_execution
+module github.com/DimVlas/otus_hw/hw06_pipeline_execution
 
 go 1.19
 
