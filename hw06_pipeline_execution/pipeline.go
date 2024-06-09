@@ -25,11 +25,19 @@ func chanWrap(in In, done In) Out {
 	go func() {
 		defer close(out)
 
-		for val := range in {
+		for {
 			select {
-			case out <- val:
 			case <-done:
 				return
+			case val, ok := <-in:
+				if !ok {
+					return
+				}
+				select {
+				case <-done:
+					return
+				case out <- val:
+				}
 			}
 		}
 	}()
