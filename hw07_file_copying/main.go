@@ -20,21 +20,6 @@ func init() {
 func main() {
 	flag.Parse()
 
-	// var (
-	// 	tt int64 = 1024
-	// 	i  int64 = 0
-	// )
-	// pct := &pp.PctProgress{}
-	// pct.Start(tt)
-	// for ; i < tt; i += 10 {
-	// 	pct.Increment(10)
-	// 	time.Sleep(time.Second / 20)
-	// }
-
-	// pct.Finish()
-
-	// time.Sleep(time.Millisecond * 500)
-
 	if err := Copy(from, to, offset, limit); err != nil {
 		fmt.Println(err)
 		return
