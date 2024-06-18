@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -76,7 +74,7 @@ func TestFileCreate(t *testing.T) {
 	})
 
 	t.Run("no error new file", func(t *testing.T) {
-		toPath := fmt.Sprintf("./testdata/out_test_create_%v.txt", time.DateTime)
+		toPath := "./testdata/out_test_create.txt"
 
 		toFile, tstErr := fileCreate(toPath)
 		defer func() {
