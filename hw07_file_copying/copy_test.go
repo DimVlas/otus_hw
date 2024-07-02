@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -8,178 +9,205 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCopy(t *testing.T) {
-	newFile, err := os.CreateTemp("./testdata/", "test_file_*.txt")
+const (
+	defOutName   string = "./testdata/out_test_file.txt"
+	defInputName string = "./testdata/input.txt"
+)
+
+func prepareTestFile() (string, int64, error) {
+	testFile, err := os.CreateTemp("./testdata/", "test_file_*.txt")
 	if err != nil {
-		panic(err)
+		log.Fatalf("prepareTestFile: CreateTemp: %s", err)
 	}
 	defer func() {
-		os.Remove(newFile.Name())
+		testFile.Close()
 	}()
 
-	size, err := newFile.WriteString("Необходимо реализовать утилиту копирования файлов\n") // size = 95
+	size, err := testFile.WriteString("Необходимо реализовать утилиту копирования файлов\n") // size = 95
+	if err != nil {
+		log.Printf("prepareTestFile: %s", err)
+		return "", 0, err
+	}
+
+	return testFile.Name(), int64(size), nil
+}
+
+func TestCopyFromFile(t *testing.T) {
+	// исходный файл не корректный
+	t.Run("fromFile not regular file", func(t *testing.T) {
+		fromName := "/dev/urandom"
+		toName := defOutName
+
+		tstErr := Copy(fromName, toName, 0, 0)
+
+		require.EqualError(t, tstErr, "fromFile: "+ErrUnsupportedFile.Error(), "actual err - %v", tstErr)
+	})
+
+	// исходный файл дирректория
+	t.Run("fromFile is directory", func(t *testing.T) {
+		fromName := "./testdata/"
+		toName := defOutName
+
+		tstErr := Copy(fromName, toName, 0, 0)
+
+		require.EqualError(t, tstErr, "fromFile: "+ErrUnsupportedFile.Error(), "actual err - %v", tstErr)
+	})
+
+	// исходный файл не существует
+	t.Run("fromFile no such file", func(t *testing.T) {
+		fromName := "./testdata/not_exists_file.txt"
+		toName := defOutName
+
+		tstErr := Copy(fromName, toName, 0, 0)
+
+		require.EqualError(t, tstErr,
+			fmt.Sprintf("fromFileOpen: open %v: no such file or directory", fromName),
+			"actual err - %v", tstErr)
+	})
+}
+
+func TestCopyToFile(t *testing.T) {
+	// целевой файл не корректный
+	t.Run("toFile not regular file", func(t *testing.T) {
+		tstErr := Copy(defInputName, "/dev/urandom", 0, 0)
+
+		require.EqualError(t, tstErr, "toFile: "+ErrUnsupportedFile.Error(), "actual err - %v", tstErr)
+	})
+
+	// целевой файл директория
+	t.Run("toFile is a directory", func(t *testing.T) {
+		toName := "./testdata/"
+
+		tstErr := Copy(defInputName, toName, 0, 0)
+
+		require.EqualError(t, tstErr, fmt.Sprintf("toFileCreate: open %v: is a directory", toName), "actual err - %v", tstErr)
+	})
+}
+
+func TestCopy(t *testing.T) {
+	testFileName, size, err := prepareTestFile()
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	defer func() {
+		os.Remove(testFileName)
+	}()
 
-	log.Println(size)
+	// исходный файл меньше offset
+	t.Run("fromFile size less offset", func(t *testing.T) {
+		tstErr := Copy(testFileName, defOutName, size, 0)
 
-	t.Run("no error full file", func(t *testing.T) {
-		toName := "./testdata/out_test_file.txt"
-		err := Copy(newFile.Name(), toName, 0, 0)
-
-		require.NoError(t, err)
-		require.FileExistsf(t, toName, "file must %v exists", toName)
-
-		toFile, _ := os.Open(toName)
-		toFileInfo, _ := toFile.Stat()
-		require.Equalf(t, int64(size), toFileInfo.Size(), "file size must be %v", size)
-
-		defer os.Remove(toFile.Name())
+		require.EqualError(t, tstErr, "fromFile: offset exceeds file size", "actual err - %v", tstErr)
 	})
 
-	t.Run("no error size less limit", func(t *testing.T) {
-		toName := "./testdata/out_test_file.txt"
-		err := Copy(newFile.Name(), toName, 90, 30)
-
-		require.NoError(t, err)
-		require.FileExistsf(t, toName, "file must %v exists", toName)
-
-		toFile, _ := os.Open(toName)
-		toFileInfo, _ := toFile.Stat()
-		require.Equalf(t, int64(5), toFileInfo.Size(), "file size must be %v", 5)
-
-		defer os.Remove(toFile.Name())
-	})
-}
-
-func TestFileCreate(t *testing.T) {
-	t.Run("not regular file", func(t *testing.T) {
-		fromPath := "/dev/urandom"
-
-		toFile, tstErr := fileCreate(fromPath)
-		defer func() {
-			if toFile == nil {
-				return
-			}
-			errCl := toFile.Close()
-			if errCl != nil {
-				panic(errCl)
-			}
-		}()
-
-		require.EqualError(t, tstErr, ErrUnsupportedFile.Error(), "actual err - %v", tstErr)
-		require.Nil(t, toFile, "file must be nil")
-	})
-
-	t.Run("no error new file", func(t *testing.T) {
-		toPath := "./testdata/out_test_create.txt"
-
-		toFile, tstErr := fileCreate(toPath)
-		defer func() {
-			if toFile == nil {
-				return
-			}
-
-			if errCl := toFile.Close(); errCl != nil {
-				panic(errCl)
-			}
-			if errRm := os.Remove(toFile.Name()); errRm != nil {
-				panic(errRm)
-			}
-		}()
-
+	// без ошибок копируем в новый файл
+	t.Run("no error full copy new file", func(t *testing.T) {
+		tstErr := Copy(testFileName, defOutName, 0, 0)
 		require.NoError(t, tstErr)
-		require.NotNil(t, toFile, "file must not be nil")
-	})
 
-	t.Run("no error exist file", func(t *testing.T) {
-		newFile, err := os.CreateTemp("./testdata/", "out_test_create_*.txt")
-		if err != nil {
-			panic(err)
+		toFile, tstErr := os.Open(defOutName)
+		if tstErr != nil {
+			t.Error(tstErr)
+			return
 		}
+
 		defer func() {
-			os.Remove(newFile.Name())
+			toFile.Close()
+			os.Remove(toFile.Name())
 		}()
 
-		toPath := newFile.Name()
-		toFile, tstErr := fileCreate(toPath)
-		defer func() {
-			if toFile == nil {
-				return
-			}
-			errCl := toFile.Close()
-			if errCl != nil {
-				panic(errCl)
-			}
-		}()
+		toFileInfo, tstErr := toFile.Stat()
+		if tstErr != nil {
+			t.Error(tstErr)
+			return
+		}
 
-		require.NoError(t, tstErr)
+		require.Equalf(t, size, toFileInfo.Size(), "file size must be %v", size)
+
 		require.NotNil(t, toFile, "file must not be nil")
 	})
-}
 
-func TestFileOpen(t *testing.T) {
-	t.Run("not regular file", func(t *testing.T) {
-		var offset int64 = 1000
+	// без ошибок копируем файл целиком
+	t.Run("no error full file", func(t *testing.T) {
+		err := Copy(testFileName, defOutName, 0, 0)
 
-		fromPath := "/dev/urandom"
+		require.NoError(t, err)
+		require.FileExistsf(t, defOutName, "file must %v exists", defOutName)
 
-		fromFile, fromSize, tstErr := fileOpen(fromPath, offset)
+		toFile, tstErr := os.Open(defOutName)
+		if tstErr != nil {
+			t.Error(tstErr)
+			return
+		}
+
 		defer func() {
-			if fromFile == nil {
-				return
-			}
-			errCl := fromFile.Close()
-			if errCl != nil {
-				panic(errCl)
-			}
+			toFile.Close()
+			os.Remove(toFile.Name())
 		}()
 
-		require.EqualError(t, tstErr, ErrUnsupportedFile.Error(), "actual err - %v", tstErr)
-		require.Nil(t, fromFile, "file must be nil")
-		require.Equal(t, fromSize, int64(0), "file size must be 0")
+		toFileInfo, tstErr := toFile.Stat()
+		if tstErr != nil {
+			t.Error(tstErr)
+			return
+		}
+
+		require.Equalf(t, size, toFileInfo.Size(), "file size must be %v", size)
 	})
 
-	t.Run("big file", func(t *testing.T) {
-		var offset int64 = 1000
-		fromPath := "./testdata/out_offset6000_limit1000.txt"
+	// без ошибок копируем, но limit превышает размер
+	t.Run("no error size less limit", func(t *testing.T) {
+		err := Copy(testFileName, defOutName, 90, 30)
 
-		fromFile, fromSize, tstErr := fileOpen(fromPath, offset)
+		require.NoError(t, err)
+		require.FileExistsf(t, defOutName, "file must %v exists", defOutName)
+
+		toFile, tstErr := os.Open(defOutName)
+		if tstErr != nil {
+			t.Error(tstErr)
+			return
+		}
+
 		defer func() {
-			if fromFile == nil {
-				return
-			}
-			errCl := fromFile.Close()
-			if errCl != nil {
-				panic(errCl)
-			}
+			toFile.Close()
+			os.Remove(toFile.Name())
 		}()
 
-		require.EqualError(t, tstErr, ErrOffsetExceedsFileSize.Error(), "actual err - %v", tstErr)
-		require.Nil(t, fromFile, "file must be nil")
-		require.Equal(t, fromSize, int64(0), "file size must be 0")
+		toFileInfo, tstErr := toFile.Stat()
+		if tstErr != nil {
+			t.Error(tstErr)
+			return
+		}
+		require.Equalf(t, int64(5), toFileInfo.Size(), "file size must be %v", 5)
 	})
 
-	t.Run("no error", func(t *testing.T) {
-		var offset int64 = 100
+	// без ошибок копируем в существующий файл
+	t.Run("no error exists toFile", func(t *testing.T) {
+		var limit int64 = 10
+		fromName := "./testdata/input.txt"
+		toName := testFileName
+		err := Copy(fromName, toName, 0, limit)
 
-		fromPath := "./testdata/out_offset6000_limit1000.txt"
+		require.NoError(t, err)
+		require.FileExistsf(t, toName, "file must %v exists", toName)
 
-		fromFile, fromSize, tstErr := fileOpen(fromPath, offset)
-		log.Println(fromSize)
+		toFile, tstErr := os.Open(toName)
+		if tstErr != nil {
+			t.Error(err)
+			return
+		}
+
 		defer func() {
-			if fromFile == nil {
-				return
-			}
-			errCl := fromFile.Close()
-			if errCl != nil {
-				panic(errCl)
-			}
+			toFile.Close()
+			os.Remove(toFile.Name())
 		}()
-		require.NoError(t, tstErr)
-		require.NotNil(t, fromFile, "file must not be nil")
-		require.Equalf(t, fromSize, int64(617), "file size must be %v", fromSize)
+
+		toFileInfo, tstErr := toFile.Stat()
+		if tstErr != nil {
+			t.Error(err)
+			return
+		}
+
+		require.Equalf(t, limit, toFileInfo.Size(), "file size must be %v", size)
 	})
 }

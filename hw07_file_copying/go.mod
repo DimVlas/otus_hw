@@ -1,4 +1,4 @@
-module github.com/DimVlas/hw07_file_copying
+module github.com/DimVlas/otus_hw/hw07_file_copying
 
 go 1.19
 
