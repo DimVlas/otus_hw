@@ -46,28 +46,11 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
-		fName := fmt.Sprintf("%s%v%s", dir, string(os.PathSeparator), de.Name())
-		f, err := os.Open(fName)
+		fName := filepath.Join(dir, de.Name())
+		data, err := readData(fName)
 		if err != nil {
-			log.Printf("open file '%s': %s", fName, err)
+			log.Printf("ReadFile: %s", err)
 			continue
-		}
-
-		rd := bufio.NewReader(f)
-		data, flg, err := rd.ReadLine()
-		if err != nil {
-			log.Printf("ReadLine: %s", err)
-			continue
-		}
-
-		var d []byte
-		for flg {
-			d, flg, err = rd.ReadLine()
-			if err != nil {
-				log.Printf("ReadLine: %s", err)
-				continue
-			}
-			data = append(data, d...)
 		}
 
 		data = bytes.ReplaceAll(data, []byte("\000"), []byte("\n"))
@@ -76,6 +59,26 @@ func ReadDir(dir string) (Environment, error) {
 	}
 
 	return env, nil
+}
+
+func readData(fileName string) ([]byte, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("open file '%s': %w", fileName, err)
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanLines)
+
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return nil, fmt.Errorf("scan: %w", err)
+		}
+		return make([]byte, 0), nil
+	}
+
+	return scanner.Bytes(), nil
 }
 
 func SetEnv(env Environment) error {
