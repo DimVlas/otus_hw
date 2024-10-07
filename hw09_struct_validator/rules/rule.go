@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"unicode/utf8"
 )
@@ -31,6 +32,21 @@ var Rules = map[reflect.Kind]map[string]func(v reflect.Value, condition string) 
 			return nil
 		},
 		"regexp": func(v reflect.Value, condition string) error {
+			if v.Kind() != reflect.String {
+				return fmt.Errorf("this rule applies only to the string")
+			}
+
+			pattern, err := regexp.Compile(condition)
+			if err != nil {
+				return err
+			}
+			if !pattern.MatchString(v.String()) {
+				return ValidationError{
+					Field: "",
+					Err:   fmt.Errorf("length of the string not equal to %s", condition),
+				}
+			}
+
 			return ErrNotImplement
 		},
 		"in": func(v reflect.Value, condition string) error {
