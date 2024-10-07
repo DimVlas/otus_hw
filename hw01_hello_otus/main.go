@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	stringutil "golang.org/x/example/stringutil"
+	reverse "golang.org/x/example/hello/reverse"
 )
 
 const HelloStr string = "Hello, OTUS!"
 
 func main() {
-	fmt.Println(stringutil.Reverse(HelloStr))
+	fmt.Println(reverse.String(HelloStr))
 }
