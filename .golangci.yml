@@ -8,21 +8,6 @@ linters-settings:
   funlen:
     lines: 150
     statements: 80
-  depguard:
-    rules:
-      main:
-        list-mode: lax
-        files:
-        - $all
-        - "!$test"
-        allow:
-        - $gostd
-      test:
-        files:
-        - "$test"
-        allow:
-        - $gostd
-        - "github.com/stretchr/testify/require"
 
 issues:
   exclude-rules:
@@ -37,10 +22,10 @@ linters:
   disable-all: true
   enable:
     - asciicheck
-    - bodyclose
     - depguard
     - dogsled
     - dupl
+    - bodyclose
     - durationcheck
     - errorlint
     - exhaustive
