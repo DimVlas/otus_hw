@@ -58,24 +58,3 @@ func TestValidate(t *testing.T) {
 		})
 	}
 }
-
-func TestCheck(t *testing.T) {
-	// err := checkStruct(struct {
-	// 	Id   int    `validate:"min:1|max:100"`
-	// 	Name string `validate:"len:10"`
-	// }{
-	// 	Id:   55,
-	// 	Name: "qwerty",
-	// })
-
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	err := Validate(nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	t.Fail()
-}
