@@ -1,23 +1,66 @@
 package hw09structvalidator
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/DimVlas/otus_hw/hw09_struct_validator/rules"
 )
 
-func validate(v reflect.Value, vTag string) error {
-	switch v.Kind() {
-	case reflect.Struct:
-		return validateStruct(v, vTag)
-	case reflect.String:
-		return validateString(v, vTag)
-
-	default:
-		return fmt.Errorf("'%s' unknown data type for validation", v.Type())
+// валидирует структутру.
+// возвращает слайс ошибок валидации полей ValidationErrors или програмную ошибку
+// Паникует, если v не структура
+func validate(v reflect.Value) error {
+	cnt := v.NumField()
+	if cnt < 1 {
+		return nil
 	}
+
+	var errStruct = rules.ValidationErrors{}
+
+	for i := range cnt {
+		f := v.Type().Field(i)
+
+		if !f.IsExported() { // приватное поле
+			continue
+		}
+		fieldRules, err := rules.FieldRulesByTag(f.Name, f.Tag.Get("validate"))
+		if err != nil {
+			return err
+		}
+
+		if len(fieldRules.Rules) < 1 {
+			continue
+		}
+
+		for _, r := range fieldRules.Rules {
+			err := rules.Rules[v.Field(i).Kind()][r.Name](v.Field(i), r.Cond)
+			if err != nil {
+				errF, ok := err.(rules.ValidationError)
+				if !ok {
+					return err
+				}
+
+				errF.Field = fieldRules.FieldName
+				errStruct = append(errStruct, errF)
+			}
+		}
+	}
+
+	if len(errStruct) > 0 {
+		return errStruct
+	}
+
+	return nil
+	// switch v.Kind() {
+	// case reflect.Struct:
+	// 	return validateStruct(v, vTag)
+	// case reflect.String:
+	// 	return validateString(v, vTag)
+
+	// default:
+	// 	return fmt.Errorf("'%s' unknown data type for validation", v.Type())
+	// }
 }
 
 // Валидирует структутру.
@@ -70,39 +113,40 @@ func validStructR(v reflect.Value, vTag string) error {
 // валидирует поля структуры
 // Validation Structure Fields
 func validStructF(v reflect.Value) error {
-	cnt := v.NumField()
-	if cnt < 1 {
-		return nil
-	}
+	// cnt := v.NumField()
+	// // пустая структура
+	// if cnt < 1 {
+	// 	return nil
+	// }
 
-	var errStruct = rules.ValidationErrors{}
-	for i := 0; i < cnt; i++ {
-		f := v.Type().Field(i)
+	// var errStruct = rules.ValidationErrors{}
+	// for i := 0; i < cnt; i++ {
+	// 	f := v.Type().Field(i)
 
-		if f.PkgPath != "" { // приватное поле
-			continue
-		}
+	// 	if !f.IsExported() { // приватное поле
+	// 		continue
+	// 	}
 
-		tag := f.Tag.Get("validate")
-		if len(tag) == 0 {
-			continue
-		}
-		// рекурсивно выполняем валидацию значения поля
-		errField := validate(v.Field(i), tag)
-		if errField != nil {
-			errValid, ok := errField.(rules.ValidationErrors)
-			if !ok {
-				return errField
-			}
-			for i := range errValid {
-				errValid[i].Field = f.Name
-			}
-			errStruct = append(errStruct, errValid...)
-		}
-	}
-	if len(errStruct) > 0 {
-		return errStruct
-	}
+	// 	tag := f.Tag.Get("validate")
+	// 	if len(tag) == 0 {
+	// 		continue
+	// 	}
+	// 	// рекурсивно выполняем валидацию значения поля
+	// 	errField := validate(v.Field(i), tag)
+	// 	if errField != nil {
+	// 		errValid, ok := errField.(rules.ValidationErrors)
+	// 		if !ok {
+	// 			return errField
+	// 		}
+	// 		for i := range errValid {
+	// 			errValid[i].Field = f.Name
+	// 		}
+	// 		errStruct = append(errStruct, errValid...)
+	// 	}
+	// }
+	// if len(errStruct) > 0 {
+	// 	return errStruct
+	// }
 	return nil
 }
 

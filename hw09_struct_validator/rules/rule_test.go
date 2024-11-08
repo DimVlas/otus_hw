@@ -13,8 +13,15 @@ import (
 // тестировани функций-правил для значений типа "string".
 func TestStringLen(t *testing.T) {
 	// Неверный тип значения, передаем int вместо строки
-	t.Run("len bad value", func(t *testing.T) {
+	t.Run("len bad int value", func(t *testing.T) {
 		err := Rules[reflect.String]["len"](reflect.ValueOf(123), "0")
+
+		require.EqualError(t, err, "this rule applies only to the string")
+	})
+	// Неверный тип значения, передаем указатель вместо строки
+	t.Run("len bad &string value", func(t *testing.T) {
+		var s string = "asd"
+		err := Rules[reflect.String]["len"](reflect.ValueOf(&s), "0")
 
 		require.EqualError(t, err, "this rule applies only to the string")
 	})

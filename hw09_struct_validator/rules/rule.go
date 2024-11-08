@@ -5,21 +5,62 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 )
 
+// Описание правила проверки
+type RuleInfo struct {
+	Name string // правило проверки
+	Cond string // условие правила проверки
+}
+
+// правила проверки поля
+type FieldRules struct {
+	FieldName string     // наименование поля
+	Rules     []RuleInfo // слайс правил проверки
+}
+
+func FieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
+	frs := FieldRules{
+		FieldName: fieldName,
+		Rules:     []RuleInfo{},
+	}
+	if fieldTag == "" {
+		return frs, nil
+	}
+
+	rs := strings.Split(fieldTag, "|")
+
+	if len(rs) < 1 {
+		return frs, ErrEmptyRule
+	}
+	for _, r := range rs {
+		rule := strings.Split(r, ":")
+		if len(rule) < 2 {
+			return frs, ErrUnknowRule
+		}
+
+		frs.Rules = append(frs.Rules, RuleInfo{Name: rule[0], Cond: rule[1]})
+	}
+
+	return frs, nil
+}
+
 // типы данных на которые распространяются правила проверки
-type TypeValue uint
+//type TypeValue uint
 
 var Rules = map[reflect.Kind]map[string]func(v reflect.Value, condition string) error{
 	reflect.String: {
 		// 'len:32' - проверка длины строки должна быть 32 символа
 		"len": func(v reflect.Value, condition string) error {
 			if v.Kind() != reflect.String {
+				// это правило применимо только к строкам
 				return fmt.Errorf("this rule applies only to the string")
 			}
 			c, err := strconv.Atoi(condition)
 			if err != nil {
+				// строка не является валидным условием для правила 'len'
 				return fmt.Errorf("'%s' is not a valid condition for the 'len' rule", condition)
 			}
 
@@ -47,10 +88,10 @@ var Rules = map[reflect.Kind]map[string]func(v reflect.Value, condition string) 
 				}
 			}
 
-			return ErrNotImplement
+			return ErrRuleNotImplement
 		},
 		"in": func(v reflect.Value, condition string) error {
-			return ErrNotImplement
+			return ErrRuleNotImplement
 		},
 	},
 }

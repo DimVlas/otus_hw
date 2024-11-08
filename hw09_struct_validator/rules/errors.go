@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	ErrRequireStruct = errors.New("validate requires structure")
-	ErrEmptyRule     = errors.New("the rule cannot be empty")
-	ErrUnknowRule    = errors.New("unknow rule")
-	ErrNotImplement  = errors.New("the rule has no implementation")
+	ErrRequireStruct    = errors.New("'Validate' requires structure")
+	ErrEmptyRule        = errors.New("the rule cannot be empty")
+	ErrUnknowRule       = errors.New("unknow rule")
+	ErrRuleNotImplement = errors.New("the rule has no implementation")
 )
 
 // ошибка валидации поля структуры
