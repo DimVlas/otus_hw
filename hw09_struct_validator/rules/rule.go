@@ -21,6 +21,34 @@ type FieldRules struct {
 	Rules     []RuleInfo // слайс правил проверки
 }
 
+// парсит полученную строку, возвращая массив структур с описанием правил проверки
+// ожидается, что строка имеет вид 'правило:условие|правило:условие|...'
+func ParseRulesTag(rulesTag string) ([]RuleInfo, error) {
+	rulesTag = strings.Trim(rulesTag, " ")
+	if rulesTag == "" {
+		return []RuleInfo{}, nil
+	}
+
+	// Разбили на отдельные описания правила: строки вида 'правило:условие'
+	rs := strings.Split(rulesTag, "|")
+
+	ri := []RuleInfo{}
+	// из каждого описания правила выделяем имя правила и условие
+	for _, r := range rs {
+		if len(r) == 0 {
+			return []RuleInfo{}, ErrEmptyRule
+		}
+		rule := strings.Split(r, ":")
+		if len(rule) != 2 {
+			return []RuleInfo{}, ErrUnknowRule
+		}
+
+		ri = append(ri, RuleInfo{Name: rule[0], Cond: rule[1]})
+	}
+
+	return ri, nil
+}
+
 func FieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
 	frs := FieldRules{
 		FieldName: fieldName,

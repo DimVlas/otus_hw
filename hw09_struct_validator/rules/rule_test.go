@@ -10,6 +10,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestParseRulesTag(t *testing.T) {
+	// пустой тэг
+	t.Run("empty_tag", func(t *testing.T) {
+		rules, err := ParseRulesTag("")
+
+		require.Equal(t, []RuleInfo{}, rules, "was expected empty slice RuleInfo")
+		require.NoError(t, err, "should no error for empty tag")
+	})
+
+	// тэг с одним правилом
+	t.Run("one_rule_tag", func(t *testing.T) {
+		rules, err := ParseRulesTag("rule:condition")
+
+		require.Equal(t, []RuleInfo{{Name: "rule", Cond: "condition"}}, rules)
+		require.NoError(t, err, "should no error for empty tag")
+	})
+
+	// тэг с двумя правилами
+	t.Run("two_rule_tag", func(t *testing.T) {
+		rules, err := ParseRulesTag("rule1:condition1|rule2:condition2")
+
+		exp := []RuleInfo{
+			{Name: "rule1", Cond: "condition1"},
+			{Name: "rule2", Cond: "condition2"},
+		}
+
+		require.Equal(t, exp, rules)
+		require.NoError(t, err, "should no error for empty tag")
+	})
+
+	// ошибка: пустые правила
+	t.Run("error_empty_rules", func(t *testing.T) {
+		rules, err := ParseRulesTag("|")
+
+		require.Equal(t, []RuleInfo{}, rules)
+		require.EqualError(t, err, ErrEmptyRule.Error())
+	})
+
+	// ошибка: некорректное правило
+	t.Run("error_incorrect_rules", func(t *testing.T) {
+		rules, err := ParseRulesTag("rule:cond|rule")
+
+		require.Equal(t, []RuleInfo{}, rules)
+		require.EqualError(t, err, ErrUnknowRule.Error())
+	})
+}
+
 // тестировани функций-правил для значений типа "string".
 func TestStringLen(t *testing.T) {
 	// Неверный тип значения, передаем int вместо строки
