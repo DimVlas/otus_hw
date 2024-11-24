@@ -71,10 +71,10 @@ func FieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
 // типы данных на которые распространяются правила проверки
 //type TypeValue uint
 
-var Rules = map[reflect.Kind]map[string]func(fName string, v reflect.Value, condition string) error{
+var rules = map[reflect.Kind]map[string]func(v reflect.Value, condition string) error{
 	reflect.String: {
 		// 'len:32' - проверка длины строки должна быть 32 символа
-		"len": func(fName string, v reflect.Value, condition string) error {
+		"len": func(v reflect.Value, condition string) error {
 			if v.Kind() != reflect.String {
 				// это правило применимо только к строкам
 				return fmt.Errorf("this rule applies only to the string")
@@ -87,13 +87,12 @@ var Rules = map[reflect.Kind]map[string]func(fName string, v reflect.Value, cond
 
 			if utf8.RuneCountInString(v.String()) != c {
 				return ValidationError{
-					Field: fName,
-					Err:   fmt.Errorf("length of the string not equal to %s", condition),
+					Err: fmt.Errorf("length of the string not equal to %s", condition),
 				}
 			}
 			return nil
 		},
-		"regexp": func(fName string, v reflect.Value, condition string) error {
+		"regexp": func(v reflect.Value, condition string) error {
 			if v.Kind() != reflect.String {
 				return fmt.Errorf("this rule applies only to the string")
 			}
@@ -104,15 +103,18 @@ var Rules = map[reflect.Kind]map[string]func(fName string, v reflect.Value, cond
 			}
 			if !pattern.MatchString(v.String()) {
 				return ValidationError{
-					Field: fName,
-					Err:   fmt.Errorf("length of the string not equal to %s", condition),
+					Err: fmt.Errorf("length of the string not equal to %s", condition),
 				}
 			}
 
 			return ErrRuleNotImplement
 		},
-		"in": func(fName string, v reflect.Value, condition string) error {
+		"in": func(v reflect.Value, condition string) error {
 			return ErrRuleNotImplement
 		},
 	},
+}
+
+func validateFieldRules(value reflect.Value, kind reflect.Kind, rule string, cond string) error {
+	return rules[kind][rule](value, cond)
 }

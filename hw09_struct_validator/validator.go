@@ -30,5 +30,5 @@ func Validate(v interface{}) error {
 		return rules.ErrRequireStruct
 	}
 
-	return validate(rval)
+	return rules.ValidateStruct(rval)
 }

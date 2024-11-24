@@ -108,7 +108,7 @@ func TestFieldRulesByTag(t *testing.T) {
 func TestStringLen(t *testing.T) {
 	// Неверный тип значения, передаем int вместо строки
 	t.Run("len bad int value", func(t *testing.T) {
-		err := Rules[reflect.String]["len"]("field", reflect.ValueOf(123), "0")
+		err := rules[reflect.String]["len"](reflect.ValueOf(123), "0")
 
 		require.EqualError(t, err, "this rule applies only to the string")
 	})
@@ -116,7 +116,7 @@ func TestStringLen(t *testing.T) {
 	// Неверный тип значения, передаем указатель вместо строки
 	t.Run("len bad &string value", func(t *testing.T) {
 		var s string = "asd"
-		err := Rules[reflect.String]["len"]("field", reflect.ValueOf(&s), "0")
+		err := rules[reflect.String]["len"](reflect.ValueOf(&s), "0")
 
 		require.EqualError(t, err, "this rule applies only to the string")
 	})
@@ -125,29 +125,29 @@ func TestStringLen(t *testing.T) {
 	t.Run("len bad condition", func(t *testing.T) {
 		s := "Мой милый дом!"
 
-		err := Rules[reflect.String]["len"]("field", reflect.ValueOf(s), "s")
+		err := rules[reflect.String]["len"](reflect.ValueOf(s), "s")
 
 		require.EqualError(t, err, "'s' is not a valid condition for the 'len' rule")
 	})
 
 	// проверка провалена - длина не соответствует
 	t.Run("len not equal", func(t *testing.T) {
-		f := Rules[reflect.String]["len"]
+		f := rules[reflect.String]["len"]
 
 		s := "Мой милый дом!"
 		l := utf8.RuneCountInString(s) - 1
 
-		err := f("field", reflect.ValueOf(s), strconv.Itoa(l))
+		err := f(reflect.ValueOf(s), strconv.Itoa(l))
 
 		require.IsType(t, ValidationError{}, err)
-		require.EqualError(t, err, fmt.Sprintf("field: length of the string not equal to %d", l))
+		require.EqualError(t, err, fmt.Sprintf("length of the string not equal to %d", l))
 	})
 
 	// проверка успешна - длина соответствует
 	t.Run("len success", func(t *testing.T) {
 		s := "Мой милый дом!"
 
-		err := Rules[reflect.String]["len"]("field", reflect.ValueOf(s), strconv.Itoa(utf8.RuneCountInString(s)))
+		err := rules[reflect.String]["len"](reflect.ValueOf(s), strconv.Itoa(utf8.RuneCountInString(s)))
 		require.NoError(t, err)
 	})
 
