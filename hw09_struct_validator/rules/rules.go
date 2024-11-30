@@ -21,57 +21,10 @@ type FieldRules struct {
 	Rules     []RuleInfo // слайс правил проверки
 }
 
-// парсит полученную строку, возвращая массив структур с описанием правил проверки
-// ожидается, что строка имеет вид 'правило:условие|правило:условие|...'
-func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
-	rulesTag = strings.Trim(rulesTag, " ")
-	if rulesTag == "" {
-		return []RuleInfo{}, nil
-	}
+type ValidateFunc func(v reflect.Value, condition string) error
 
-	// Разбили на отдельные описания правила: строки вида 'правило:условие'
-	rs := strings.Split(rulesTag, "|")
-
-	ri := []RuleInfo{}
-	// из каждого описания правила выделяем имя правила и условие
-	for _, r := range rs {
-		if len(r) == 0 {
-			return []RuleInfo{}, ErrEmptyRule
-		}
-		rule := strings.Split(r, ":")
-		if len(rule) != 2 {
-			return []RuleInfo{}, ErrUnknowRule
-		}
-
-		ri = append(ri, RuleInfo{Name: rule[0], Cond: rule[1]})
-	}
-
-	return ri, nil
-}
-
-func FieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
-	frs := FieldRules{
-		FieldName: fieldName,
-		Rules:     []RuleInfo{},
-	}
-	if fieldTag == "" {
-		return frs, nil
-	}
-
-	rls, err := parseRulesTag(fieldTag)
-	if err != nil {
-		return frs, err
-	}
-
-	frs.Rules = rls
-
-	return frs, nil
-}
-
-// типы данных на которые распространяются правила проверки
-//type TypeValue uint
-
-var rules = map[reflect.Kind]map[string]func(v reflect.Value, condition string) error{
+// маппа в которой по типам полей содержится маппа с типами правил и функциями проверки для каждого типа правила
+var rules = map[reflect.Kind]map[string]ValidateFunc{
 	reflect.String: {
 		// 'len:32' - проверка длины строки должна быть 32 символа
 		"len": func(v reflect.Value, condition string) error {
@@ -115,6 +68,65 @@ var rules = map[reflect.Kind]map[string]func(v reflect.Value, condition string) 
 	},
 }
 
-func validateFieldRules(value reflect.Value, kind reflect.Kind, rule string, cond string) error {
-	return rules[kind][rule](value, cond)
+// возвращает функцию валидации для типа kind и правила rule
+func funcValidation(kind reflect.Kind, rule string) (ValidateFunc, error) {
+	r, ok := rules[kind]
+	if !ok {
+		return nil, fmt.Errorf("'%s' %w", kind, ErrKindNoRules)
+	}
+
+	fv, ok := r[rule]
+	if !ok {
+		return nil, fmt.Errorf("'%s' %w", rule, ErrUnknowRule)
+	}
+
+	return fv, nil
+}
+
+// парсит полученную строку, возвращая массив структур с описанием правил проверки
+// ожидается, что строка имеет вид 'правило:условие|правило:условие|...'
+func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
+	rulesTag = strings.Trim(rulesTag, " ")
+	if rulesTag == "" {
+		return []RuleInfo{}, nil
+	}
+
+	// Разбили на отдельные описания правила: строки вида 'правило:условие'
+	rs := strings.Split(rulesTag, "|")
+
+	ri := []RuleInfo{}
+	// из каждого описания правила выделяем имя правила и условие
+	for _, r := range rs {
+		if len(r) == 0 {
+			return []RuleInfo{}, ErrEmptyRule
+		}
+		rule := strings.Split(r, ":")
+		if len(rule) != 2 {
+			return []RuleInfo{}, ErrUnknowRule
+		}
+
+		ri = append(ri, RuleInfo{Name: rule[0], Cond: rule[1]})
+	}
+
+	return ri, nil
+}
+
+// получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName
+func FieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
+	frs := FieldRules{
+		FieldName: fieldName,
+		Rules:     []RuleInfo{},
+	}
+	if fieldTag == "" {
+		return frs, nil
+	}
+
+	rls, err := parseRulesTag(fieldTag)
+	if err != nil {
+		return frs, err
+	}
+
+	frs.Rules = rls
+
+	return frs, nil
 }

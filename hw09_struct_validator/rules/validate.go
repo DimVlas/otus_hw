@@ -15,6 +15,7 @@ func ValidateStruct(v reflect.Value) error {
 
 	var errStructValid = ValidationErrors{}
 
+	// идем по полям структуры
 	for i := range cnt {
 
 		f := v.Type().Field(i)
@@ -23,6 +24,7 @@ func ValidateStruct(v reflect.Value) error {
 			continue
 		}
 
+		// валидируем поле структуры
 		if err := validateField(f, v.Field(i)); err != nil {
 			switch e := err.(type) {
 			case ValidationErrors:
@@ -60,8 +62,14 @@ func validateFieldValue(fieldValue reflect.Value, fieldRules FieldRules) error {
 
 	// перебираем все правила
 	for _, rule := range fieldRules.Rules {
-		// проверяем fieldValue очередным правилом
-		err := validateFieldRules(fieldValue, fieldValue.Kind(), rule.Name, rule.Cond)
+		// получаем функцию валидации
+		vf, err := funcValidation(fieldValue.Kind(), rule.Name)
+		if err != nil {
+			return err
+		}
+
+		// проверяем fieldValue функцией валидации
+		err = vf(fieldValue, rule.Cond)
 		// если нет ошибок - переходим к следующему правилу
 		if err == nil {
 			continue

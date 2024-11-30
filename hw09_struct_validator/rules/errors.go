@@ -10,6 +10,7 @@ var (
 	ErrEmptyRule        = errors.New("the rule cannot be empty")
 	ErrUnknowRule       = errors.New("unknow rule")
 	ErrRuleNotImplement = errors.New("the rule has no implementation")
+	ErrKindNoRules      = errors.New("for this field kind no validation rules")
 )
 
 // ошибка валидации поля структуры

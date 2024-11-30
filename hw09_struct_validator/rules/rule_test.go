@@ -10,6 +10,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFuncValidation(t *testing.T) {
+	type testData struct {
+		name     string
+		kind     reflect.Kind
+		cond     string
+		expIsNil bool
+		err      error
+	}
+
+	tests := []testData{
+		{
+			name:     "err_kind_no_rules",
+			kind:     reflect.Invalid,
+			cond:     "rule",
+			expIsNil: true,
+			err:      fmt.Errorf("'%s' %w", reflect.Invalid, ErrKindNoRules),
+		},
+		{
+			name:     "unknow_rule",
+			kind:     reflect.String,
+			cond:     "rule",
+			expIsNil: true,
+			err:      fmt.Errorf("'%s' %w", "rule", ErrUnknowRule),
+		},
+		{
+			name:     "success",
+			kind:     reflect.String,
+			cond:     "len",
+			expIsNil: false,
+			err:      nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fn, err := funcValidation(test.kind, test.cond)
+
+			if test.expIsNil {
+				require.Nil(t, fn)
+			} else {
+				require.NotNil(t, fn)
+			}
+
+			if test.err != nil {
+				require.EqualError(t, err, test.err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestParseRulesTag(t *testing.T) {
 	// пустой тэг
 	t.Run("empty_tag", func(t *testing.T) {
