@@ -21,26 +21,27 @@ type FieldRules struct {
 	Rules     []RuleInfo // слайс правил проверки
 }
 
-type ValidateFunc func(v reflect.Value, condition string) error
+// описание функции валидации
+type Validator func(v reflect.Value, condition string) error
 
-// маппа в которой по типам полей содержится маппа с типами правил и функциями проверки для каждого типа правила
-var rules = map[reflect.Kind]map[string]ValidateFunc{
+// маппа в которой по типам полей содержится маппа с типами правил и функциями валидации для каждого типа правила
+var validators = map[reflect.Kind]map[string]Validator{
 	reflect.String: {
 		// 'len:32' - проверка длины строки должна быть 32 символа
 		"len": func(v reflect.Value, condition string) error {
 			if v.Kind() != reflect.String {
-				// это правило применимо только к строкам
-				return fmt.Errorf("this rule applies only to the string")
+				// 'len' правило применимо только к строкам
+				return fmt.Errorf("'%s' %w", "len", ErrOnlyStringRule)
 			}
 			c, err := strconv.Atoi(condition)
 			if err != nil {
-				// строка не является валидным условием для правила 'len'
-				return fmt.Errorf("'%s' is not a valid condition for the 'len' rule", condition)
+				// 'condition' недопустимое условие для правила 'len'
+				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "len")
 			}
 
 			if utf8.RuneCountInString(v.String()) != c {
 				return ValidationError{
-					Err: fmt.Errorf("length of the string not equal to %s", condition),
+					Err: fmt.Errorf("%w %s", ErrNotEqualLen, condition),
 				}
 			}
 			return nil
@@ -69,8 +70,8 @@ var rules = map[reflect.Kind]map[string]ValidateFunc{
 }
 
 // возвращает функцию валидации для типа kind и правила rule
-func funcValidation(kind reflect.Kind, rule string) (ValidateFunc, error) {
-	r, ok := rules[kind]
+func validationFunction(kind reflect.Kind, rule string) (Validator, error) {
+	r, ok := validators[kind]
 	if !ok {
 		return nil, fmt.Errorf("'%s' %w", kind, ErrKindNoRules)
 	}
@@ -83,7 +84,23 @@ func funcValidation(kind reflect.Kind, rule string) (ValidateFunc, error) {
 	return fv, nil
 }
 
-// парсит полученную строку, возвращая массив структур с описанием правил проверки
+// получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName
+func fieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
+	rls, err := parseRulesTag(fieldTag)
+	if err != nil {
+		return FieldRules{
+			FieldName: fieldName,
+			Rules:     []RuleInfo{},
+		}, err
+	}
+
+	return FieldRules{
+		FieldName: fieldName,
+		Rules:     rls,
+	}, nil
+}
+
+// парсит полученную строку, возвращая массив структур с описанием правил проверки.
 // ожидается, что строка имеет вид 'правило:условие|правило:условие|...'
 func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
 	rulesTag = strings.Trim(rulesTag, " ")
@@ -109,24 +126,4 @@ func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
 	}
 
 	return ri, nil
-}
-
-// получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName
-func FieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
-	frs := FieldRules{
-		FieldName: fieldName,
-		Rules:     []RuleInfo{},
-	}
-	if fieldTag == "" {
-		return frs, nil
-	}
-
-	rls, err := parseRulesTag(fieldTag)
-	if err != nil {
-		return frs, err
-	}
-
-	frs.Rules = rls
-
-	return frs, nil
 }

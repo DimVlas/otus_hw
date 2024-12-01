@@ -13,6 +13,20 @@ var (
 	ErrKindNoRules      = errors.New("for this field kind no validation rules")
 )
 
+// программные ошибки функций валидации
+var (
+	// правило применимо только к строкам
+	ErrOnlyStringRule = errors.New("rule applies only to the string")
+	// недопустимое условие для правила
+	ErrInvalidCond = errors.New("invalid condition for the rule")
+)
+
+// ошибки валидации строк
+var (
+	// длина строки не равна
+	ErrNotEqualLen = errors.New("length of the string not equal to")
+)
+
 // ошибка валидации поля структуры
 type ValidationError struct {
 	Field string

@@ -3,14 +3,17 @@ package rules
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestFuncValidation(t *testing.T) {
+// тестируем только 2 функции пакета rules: fieldRulesByTag и validationFunction,
+// и функций валидации из маппы rules
+// отстальные функции введены для структуризации кода и не выполняют свои проверки,
+// а траслируют результат этих функций
+
+func TestValidationFunction(t *testing.T) {
 	type testData struct {
 		name     string
 		kind     reflect.Kind
@@ -49,7 +52,7 @@ func TestFuncValidation(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			fn, err := funcValidation(test.kind, test.cond)
+			fn, err := validationFunction(test.kind, test.cond)
 
 			if test.expIsNil {
 				require.Nil(t, fn, test.mess)
@@ -66,51 +69,69 @@ func TestFuncValidation(t *testing.T) {
 	}
 }
 
-func TestParseRulesTag(t *testing.T) {
+func TestFieldRulesByTag(t *testing.T) {
 	type testData struct {
-		name string
-		tag  string
-		exp  []RuleInfo
-		err  error
-		mess string
+		name  string
+		field string
+		tag   string
+		exp   FieldRules
+		err   error
+		mess  string
 	}
 
 	tests := []testData{
 		{
-			name: "empty_tag",
-			tag:  "",
-			exp:  []RuleInfo{},
+			name:  "empty_tag",
+			field: "field",
+			tag:   "",
+			exp: FieldRules{
+				FieldName: "field",
+				Rules:     []RuleInfo{},
+			},
 			err:  nil,
 			mess: "should no error for empty tag",
 		},
 		{
-			name: "one_rule_tag",
-			tag:  "rule:condition",
-			exp:  []RuleInfo{{Name: "rule", Cond: "condition"}},
+			name:  "one_rule_tag",
+			field: "field",
+			tag:   "rule:condition",
+			exp: FieldRules{
+				FieldName: "field",
+				Rules:     []RuleInfo{{Name: "rule", Cond: "condition"}},
+			},
 			err:  nil,
 			mess: "should no error for tag with one rule",
 		},
 		{
-			name: "two_rule_tag",
-			tag:  "rule1:condition1|rule2:condition2",
-			exp: []RuleInfo{
-				{Name: "rule1", Cond: "condition1"},
-				{Name: "rule2", Cond: "condition2"},
-			},
+			name:  "two_rule_tag",
+			field: "field",
+			tag:   "rule1:condition1|rule2:condition2",
+			exp: FieldRules{
+				FieldName: "field",
+				Rules: []RuleInfo{
+					{Name: "rule1", Cond: "condition1"},
+					{Name: "rule2", Cond: "condition2"},
+				}},
 			err:  nil,
 			mess: "should no error for tag with two rule",
 		},
 		{
-			name: "error_empty_rules",
-			tag:  "|",
-			exp:  []RuleInfo{},
+			name:  "error_empty_rules",
+			field: "field",
+			tag:   "|",
+			exp: FieldRules{
+				FieldName: "field",
+				Rules:     []RuleInfo{}},
 			err:  ErrEmptyRule,
 			mess: "",
 		},
 		{
-			name: "error_incorrect_rules",
-			tag:  "rule:cond|rule",
-			exp:  []RuleInfo{},
+			name:  "error_incorrect_rules",
+			field: "field",
+			tag:   "rule:cond|rule",
+			exp: FieldRules{
+				FieldName: "field",
+				Rules:     []RuleInfo{}},
 			err:  ErrUnknowRule,
 			mess: "",
 		},
@@ -118,7 +139,7 @@ func TestParseRulesTag(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r, err := parseRulesTag(test.tag)
+			r, err := fieldRulesByTag(test.field, test.tag)
 
 			require.Equal(t, test.exp, r, test.mess)
 
@@ -131,98 +152,99 @@ func TestParseRulesTag(t *testing.T) {
 	}
 }
 
-func TestFieldRulesByTag(t *testing.T) {
-	// пустой тэг
-	t.Run("empty_tag", func(t *testing.T) {
-		rules, err := FieldRulesByTag("fieldName", "")
-
-		require.Equal(t, FieldRules{FieldName: "fieldName", Rules: []RuleInfo{}}, rules, "was expected empty slice RuleInfo")
-		require.NoError(t, err, "should no error for empty tag")
-	})
-
-	// тэг с одним правилом
-	t.Run("one_rule_tag", func(t *testing.T) {
-		rules, err := FieldRulesByTag("fieldName", "rule:condition")
-
-		require.Equal(t, FieldRules{FieldName: "fieldName", Rules: []RuleInfo{{Name: "rule", Cond: "condition"}}}, rules)
-		require.NoError(t, err, "should no error for empty tag")
-	})
-
-	// тэг с двумя правилами
-	t.Run("two_rule_tag", func(t *testing.T) {
-		rules, err := FieldRulesByTag("fieldName", "rule1:condition1|rule2:condition2")
-
-		exp := []RuleInfo{
-			{Name: "rule1", Cond: "condition1"},
-			{Name: "rule2", Cond: "condition2"},
-		}
-
-		require.Equal(t, exp, rules)
-		require.NoError(t, err, "should no error for empty tag")
-	})
-
-	// ошибка: пустые правила
-	t.Run("error_empty_rules", func(t *testing.T) {
-		rules, err := FieldRulesByTag("fieldName", "|")
-
-		require.Equal(t, []RuleInfo{}, rules)
-		require.EqualError(t, err, ErrEmptyRule.Error())
-	})
-
-	// ошибка: некорректное правило
-	t.Run("error_incorrect_rules", func(t *testing.T) {
-		rules, err := FieldRulesByTag("fieldName", "rule:cond|rule")
-
-		require.Equal(t, []RuleInfo{}, rules)
-		require.EqualError(t, err, ErrUnknowRule.Error())
-	})
+type validatorTestData struct {
+	name   string
+	kind   reflect.Kind
+	rule   string
+	cond   string
+	val    reflect.Value
+	expErr error
 }
 
-// тестировани функции-правила 'len' для значений типа "string".
-func TestStringLen(t *testing.T) {
-	// Неверный тип значения, передаем int вместо строки
-	t.Run("len bad int value", func(t *testing.T) {
-		err := rules[reflect.String]["len"](reflect.ValueOf(123), "0")
+func (v *validatorTestData) validatorFunc() Validator {
+	return validators[v.kind][v.rule]
+}
 
-		require.EqualError(t, err, "this rule applies only to the string")
-	})
+var validatorTests = []validatorTestData{
+	// Значение типа reflect.String, правило len
+	{
+		// неверный тип значения
+		name:   "string_len__err_bad_type_value_int",
+		kind:   reflect.String,
+		rule:   "len",
+		cond:   "0",
+		val:    reflect.ValueOf(123),
+		expErr: ErrOnlyStringRule,
+	},
+	{
+		// неверный тип значения
+		name: "string_len__err_bad_type_value_&string",
+		kind: reflect.String,
+		rule: "len",
+		cond: "0",
+		val: func() reflect.Value {
+			s := "abc"
+			return reflect.ValueOf(&s)
+		}(),
+		expErr: ErrOnlyStringRule,
+	},
+	{
+		// неверное условия для правила
+		name: "string_len__err_bad_condition",
+		kind: reflect.String,
+		rule: "len",
+		cond: "s",
+		val: func() reflect.Value {
+			s := "Мой милый дом!"
+			return reflect.ValueOf(s)
+		}(),
+		expErr: ErrInvalidCond,
+	},
+	{
+		// проверка провалена - длина не соответствует
+		name: "string_len__err_validation_len_not_equal",
+		kind: reflect.String,
+		rule: "len",
+		cond: "5",
+		val: func() reflect.Value {
+			s := "Мой милый дом!"
+			return reflect.ValueOf(s)
+		}(),
+		expErr: ValidationError{
+			Err: fmt.Errorf("%w %s", ErrNotEqualLen, "5"),
+		},
+	},
+	{
+		// проверка провалена - длина не соответствует
+		name: "string_len__success",
+		kind: reflect.String,
+		rule: "len",
+		cond: "5",
+		val: func() reflect.Value {
+			s := "милый"
+			return reflect.ValueOf(s)
+		}(),
+		expErr: nil,
+	},
+}
 
-	// Неверный тип значения, передаем указатель вместо строки
-	t.Run("len bad &string value", func(t *testing.T) {
-		var s string = "asd"
-		err := rules[reflect.String]["len"](reflect.ValueOf(&s), "0")
+func TestValidator(t *testing.T) {
+	for _, test := range validatorTests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.validatorFunc()(test.val, test.cond)
 
-		require.EqualError(t, err, "this rule applies only to the string")
-	})
+			if test.expErr == nil {
+				require.NoError(t, err)
+				return
+			}
 
-	// неверное значение условия для правила
-	t.Run("len bad condition", func(t *testing.T) {
-		s := "Мой милый дом!"
+			if e, ok := test.expErr.(ValidationError); ok {
+				require.IsType(t, e, err)
+				require.ErrorContains(t, err, e.Error())
+				return
+			}
 
-		err := rules[reflect.String]["len"](reflect.ValueOf(s), "s")
-
-		require.EqualError(t, err, "'s' is not a valid condition for the 'len' rule")
-	})
-
-	// проверка провалена - длина не соответствует
-	t.Run("len not equal", func(t *testing.T) {
-		f := rules[reflect.String]["len"]
-
-		s := "Мой милый дом!"
-		l := utf8.RuneCountInString(s) - 1
-
-		err := f(reflect.ValueOf(s), strconv.Itoa(l))
-
-		require.IsType(t, ValidationError{}, err)
-		require.EqualError(t, err, fmt.Sprintf("length of the string not equal to %d", l))
-	})
-
-	// проверка успешна - длина соответствует
-	t.Run("len success", func(t *testing.T) {
-		s := "Мой милый дом!"
-
-		err := rules[reflect.String]["len"](reflect.ValueOf(s), strconv.Itoa(utf8.RuneCountInString(s)))
-		require.NoError(t, err)
-	})
-
+			require.ErrorIs(t, err, test.expErr)
+		})
+	}
 }

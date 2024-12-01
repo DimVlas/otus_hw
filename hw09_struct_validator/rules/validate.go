@@ -5,8 +5,8 @@ import (
 )
 
 // валидирует структутру.
-// возвращает слайс ошибок валидации полей ValidationErrors или програмную ошибку
-// Паникует, если v не структура
+// возвращает слайс ошибок валидации полей ValidationErrors или програмную ошибку.
+// паникует, если v не структура
 func ValidateStruct(v reflect.Value) error {
 	cnt := v.NumField()
 	if cnt < 1 {
@@ -44,7 +44,7 @@ func ValidateStruct(v reflect.Value) error {
 
 // валидирует поле структуры
 func validateField(fieldInfo reflect.StructField, fieldValue reflect.Value) error {
-	fieldRules, err := FieldRulesByTag(fieldInfo.Name, fieldInfo.Tag.Get("validate"))
+	fieldRules, err := fieldRulesByTag(fieldInfo.Name, fieldInfo.Tag.Get("validate"))
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func validateFieldValue(fieldValue reflect.Value, fieldRules FieldRules) error {
 	// перебираем все правила
 	for _, rule := range fieldRules.Rules {
 		// получаем функцию валидации
-		vf, err := funcValidation(fieldValue.Kind(), rule.Name)
+		vf, err := validationFunction(fieldValue.Kind(), rule.Name)
 		if err != nil {
 			return err
 		}
