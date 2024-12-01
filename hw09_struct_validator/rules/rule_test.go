@@ -17,6 +17,7 @@ func TestFuncValidation(t *testing.T) {
 		cond     string
 		expIsNil bool
 		err      error
+		mess     string
 	}
 
 	tests := []testData{
@@ -26,6 +27,7 @@ func TestFuncValidation(t *testing.T) {
 			cond:     "rule",
 			expIsNil: true,
 			err:      fmt.Errorf("'%s' %w", reflect.Invalid, ErrKindNoRules),
+			mess:     "expected error " + fmt.Errorf("'%s' %w", reflect.Invalid, ErrKindNoRules).Error(),
 		},
 		{
 			name:     "unknow_rule",
@@ -33,6 +35,7 @@ func TestFuncValidation(t *testing.T) {
 			cond:     "rule",
 			expIsNil: true,
 			err:      fmt.Errorf("'%s' %w", "rule", ErrUnknowRule),
+			mess:     "expected error " + fmt.Errorf("'%s' %w", "rule", ErrUnknowRule).Error(),
 		},
 		{
 			name:     "success",
@@ -40,6 +43,7 @@ func TestFuncValidation(t *testing.T) {
 			cond:     "len",
 			expIsNil: false,
 			err:      nil,
+			mess:     "expected not nil validation function",
 		},
 	}
 
@@ -48,65 +52,83 @@ func TestFuncValidation(t *testing.T) {
 			fn, err := funcValidation(test.kind, test.cond)
 
 			if test.expIsNil {
-				require.Nil(t, fn)
+				require.Nil(t, fn, test.mess)
 			} else {
-				require.NotNil(t, fn)
+				require.NotNil(t, fn, test.mess)
 			}
 
 			if test.err != nil {
-				require.EqualError(t, err, test.err.Error())
+				require.EqualError(t, err, test.err.Error(), test.mess)
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, err, test.mess)
 			}
 		})
 	}
 }
 
 func TestParseRulesTag(t *testing.T) {
-	// пустой тэг
-	t.Run("empty_tag", func(t *testing.T) {
-		rules, err := parseRulesTag("")
+	type testData struct {
+		name string
+		tag  string
+		exp  []RuleInfo
+		err  error
+		mess string
+	}
 
-		require.Equal(t, []RuleInfo{}, rules, "was expected empty slice RuleInfo")
-		require.NoError(t, err, "should no error for empty tag")
-	})
+	tests := []testData{
+		{
+			name: "empty_tag",
+			tag:  "",
+			exp:  []RuleInfo{},
+			err:  nil,
+			mess: "should no error for empty tag",
+		},
+		{
+			name: "one_rule_tag",
+			tag:  "rule:condition",
+			exp:  []RuleInfo{{Name: "rule", Cond: "condition"}},
+			err:  nil,
+			mess: "should no error for tag with one rule",
+		},
+		{
+			name: "two_rule_tag",
+			tag:  "rule1:condition1|rule2:condition2",
+			exp: []RuleInfo{
+				{Name: "rule1", Cond: "condition1"},
+				{Name: "rule2", Cond: "condition2"},
+			},
+			err:  nil,
+			mess: "should no error for tag with two rule",
+		},
+		{
+			name: "error_empty_rules",
+			tag:  "|",
+			exp:  []RuleInfo{},
+			err:  ErrEmptyRule,
+			mess: "",
+		},
+		{
+			name: "error_incorrect_rules",
+			tag:  "rule:cond|rule",
+			exp:  []RuleInfo{},
+			err:  ErrUnknowRule,
+			mess: "",
+		},
+	}
 
-	// тэг с одним правилом
-	t.Run("one_rule_tag", func(t *testing.T) {
-		rules, err := parseRulesTag("rule:condition")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r, err := parseRulesTag(test.tag)
 
-		require.Equal(t, []RuleInfo{{Name: "rule", Cond: "condition"}}, rules)
-		require.NoError(t, err, "should no error for empty tag")
-	})
+			require.Equal(t, test.exp, r, test.mess)
 
-	// тэг с двумя правилами
-	t.Run("two_rule_tag", func(t *testing.T) {
-		rules, err := parseRulesTag("rule1:condition1|rule2:condition2")
-
-		exp := []RuleInfo{
-			{Name: "rule1", Cond: "condition1"},
-			{Name: "rule2", Cond: "condition2"},
-		}
-
-		require.Equal(t, exp, rules)
-		require.NoError(t, err, "should no error for empty tag")
-	})
-
-	// ошибка: пустые правила
-	t.Run("error_empty_rules", func(t *testing.T) {
-		rules, err := parseRulesTag("|")
-
-		require.Equal(t, []RuleInfo{}, rules)
-		require.EqualError(t, err, ErrEmptyRule.Error())
-	})
-
-	// ошибка: некорректное правило
-	t.Run("error_incorrect_rules", func(t *testing.T) {
-		rules, err := parseRulesTag("rule:cond|rule")
-
-		require.Equal(t, []RuleInfo{}, rules)
-		require.EqualError(t, err, ErrUnknowRule.Error())
-	})
+			if err != nil {
+				require.EqualError(t, err, test.err.Error(), test.mess)
+			} else {
+				require.NoError(t, err, test.mess)
+			}
+		})
+	}
 }
 
 func TestFieldRulesByTag(t *testing.T) {
