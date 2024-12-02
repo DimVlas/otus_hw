@@ -201,7 +201,7 @@ var validatorTests = []validatorTestData{
 		expErr: ErrInvalidCond,
 	},
 	{
-		// проверка провалена - длина не соответствует
+		// ошибка валидации - длина не соответствует
 		name: "string_len__err_validation_len_not_equal",
 		kind: reflect.String,
 		rule: "len",
@@ -211,11 +211,11 @@ var validatorTests = []validatorTestData{
 			return reflect.ValueOf(s)
 		}(),
 		expErr: ValidationError{
-			Err: fmt.Errorf("%w %s", ErrNotEqualLen, "5"),
+			Err: ErrLenNotEqual,
 		},
 	},
 	{
-		// проверка провалена - длина не соответствует
+		// успешная валидация
 		name: "string_len__success",
 		kind: reflect.String,
 		rule: "len",
@@ -224,6 +224,54 @@ var validatorTests = []validatorTestData{
 			s := "милый"
 			return reflect.ValueOf(s)
 		}(),
+		expErr: nil,
+	},
+	// Значение типа reflect.String, правило regexp
+	{
+		// неверный тип значения
+		name:   "string_regexp__err_bad_type_value_int",
+		kind:   reflect.String,
+		rule:   "regexp",
+		cond:   "",
+		val:    reflect.ValueOf(123),
+		expErr: ErrOnlyStringRule,
+	},
+	{
+		// неверное условия для правила
+		name:   "string_regexp__err_bad_condition",
+		kind:   reflect.String,
+		rule:   "regexp",
+		cond:   "",
+		val:    reflect.ValueOf("Дом, милый дом!"),
+		expErr: ErrInvalidCond,
+	},
+	{
+		// неверное регулярное выражение
+		name:   "string_regexp__err_bad_regexp",
+		kind:   reflect.String,
+		rule:   "regexp",
+		cond:   `/[`,
+		val:    reflect.ValueOf("Дом, милый дом!"),
+		expErr: ErrRegexpCompile,
+	},
+	{
+		// ошибка валидации - нет совпадения с регулярным выражением
+		name: "string_regexp__err_validation_regexp_not_match",
+		kind: reflect.String,
+		rule: "regexp",
+		cond: `dam`,
+		val:  reflect.ValueOf("Дом, милый дом!"),
+		expErr: ValidationError{
+			Err: ErrReExpNotMatch,
+		},
+	},
+	{
+		// успешная валидация
+		name:   "string_regexp__success",
+		kind:   reflect.String,
+		rule:   "regexp",
+		cond:   `дом`,
+		val:    reflect.ValueOf("Дом, милый дом!"),
 		expErr: nil,
 	},
 }
@@ -239,8 +287,7 @@ func TestValidator(t *testing.T) {
 			}
 
 			if e, ok := test.expErr.(ValidationError); ok {
-				require.IsType(t, e, err)
-				require.ErrorContains(t, err, e.Error())
+				require.ErrorIs(t, err, e.Err)
 				return
 			}
 

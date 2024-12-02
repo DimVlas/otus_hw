@@ -19,12 +19,16 @@ var (
 	ErrOnlyStringRule = errors.New("rule applies only to the string")
 	// недопустимое условие для правила
 	ErrInvalidCond = errors.New("invalid condition for the rule")
+	// ошибка компиляции регулярного выражения
+	ErrRegexpCompile = errors.New("regex compilation error")
 )
 
 // ошибки валидации строк
 var (
 	// длина строки не равна
-	ErrNotEqualLen = errors.New("length of the string not equal to")
+	ErrLenNotEqual = errors.New("length of the string not equal to")
+	// строка не содержит совпадений с регулярным выражением
+	ErrReExpNotMatch = errors.New("string does not contain any matches to the regular expression")
 )
 
 // ошибка валидации поля структуры
@@ -38,6 +42,10 @@ func (v ValidationError) Error() string {
 		return fmt.Sprintf("%v", v.Err)
 	}
 	return fmt.Sprintf("%s: %v", v.Field, v.Err)
+}
+
+func (v ValidationError) Unwrap() error {
+	return v.Err
 }
 
 // слайс ошибок валидации полей структуры

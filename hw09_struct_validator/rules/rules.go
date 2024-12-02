@@ -41,27 +41,31 @@ var validators = map[reflect.Kind]map[string]Validator{
 
 			if utf8.RuneCountInString(v.String()) != c {
 				return ValidationError{
-					Err: fmt.Errorf("%w %s", ErrNotEqualLen, condition),
+					Err: fmt.Errorf("%w %s", ErrLenNotEqual, condition),
 				}
 			}
 			return nil
 		},
 		"regexp": func(v reflect.Value, condition string) error {
 			if v.Kind() != reflect.String {
-				return fmt.Errorf("this rule applies only to the string")
+				return fmt.Errorf("'%s' %w", "regexp", ErrOnlyStringRule)
+			}
+			if condition == "" {
+				// 'condition' недопустимое условие для правила 'len'
+				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "regexp")
 			}
 
 			pattern, err := regexp.Compile(condition)
 			if err != nil {
-				return err
-			}
-			if !pattern.MatchString(v.String()) {
-				return ValidationError{
-					Err: fmt.Errorf("length of the string not equal to %s", condition),
-				}
+				return fmt.Errorf("'%s' %w: %w", condition, ErrRegexpCompile, err)
 			}
 
-			return ErrRuleNotImplement
+			if !pattern.MatchString(v.String()) {
+				return ValidationError{
+					Err: fmt.Errorf("%w '%s'", ErrReExpNotMatch, condition),
+				}
+			}
+			return nil
 		},
 		"in": func(v reflect.Value, condition string) error {
 			return ErrRuleNotImplement
