@@ -41,7 +41,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 
 			if utf8.RuneCountInString(v.String()) != c {
 				return ValidationError{
-					Err: fmt.Errorf("%w %s", ErrLenNotEqual, condition),
+					Err: fmt.Errorf("%w %s", ErrStrLenNotEqual, condition),
 				}
 			}
 			return nil
@@ -51,7 +51,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 				return fmt.Errorf("'%s' %w", "regexp", ErrOnlyStringRule)
 			}
 			if condition == "" {
-				// 'condition' недопустимое условие для правила 'len'
+				// 'condition' недопустимое условие для правила 'regexp'
 				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "regexp")
 			}
 
@@ -62,13 +62,101 @@ var validators = map[reflect.Kind]map[string]Validator{
 
 			if !pattern.MatchString(v.String()) {
 				return ValidationError{
-					Err: fmt.Errorf("%w '%s'", ErrReExpNotMatch, condition),
+					Err: fmt.Errorf("%w '%s'", ErrStrReExpNotMatch, condition),
 				}
 			}
 			return nil
 		},
 		"in": func(v reflect.Value, condition string) error {
-			return ErrRuleNotImplement
+			if v.Kind() != reflect.String {
+				return fmt.Errorf("'%s' %w", "regexp", ErrOnlyStringRule)
+			}
+			if condition == "" {
+				// 'condition' недопустимое условие для правила 'regexp'
+				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "in")
+			}
+
+			if !strings.Contains(condition, v.String()) {
+				return ValidationError{
+					Err: fmt.Errorf("%w '%s'", ErrStrNotIntList, condition),
+				}
+			}
+
+			return nil
+		},
+	},
+	reflect.Int: {
+		// 'min:32' - число не может быть меньше 10;
+		"min": func(v reflect.Value, condition string) error {
+			if v.Kind() != reflect.Int {
+				// 'min' правило применимо только к wtksv
+				return fmt.Errorf("'%s' %w", "min", ErrOnlyIntRule)
+			}
+			c, err := strconv.ParseInt(condition, 0, 0)
+			if err != nil {
+				// 'condition' недопустимое условие для правила 'min'
+				return fmt.Errorf("'%s' %w '%s': %w", condition, ErrInvalidCond, "min", err)
+			}
+
+			if v.Int() < c {
+				return ValidationError{
+					Err: fmt.Errorf("%w %s", ErrIntCantBeLess, condition),
+				}
+			}
+			return nil
+		},
+		// 'max:32' - число не может быть больше 10;
+		"max": func(v reflect.Value, condition string) error {
+			if v.Kind() != reflect.Int {
+				// 'max' правило применимо только к целым
+				return fmt.Errorf("'%s' %w", "max", ErrOnlyIntRule)
+			}
+			c, err := strconv.ParseInt(condition, 0, 0)
+			if err != nil {
+				// 'condition' недопустимое условие для правила 'min'
+				return fmt.Errorf("'%s' %w '%s': %w", condition, ErrInvalidCond, "max", err)
+			}
+
+			if v.Int() > c {
+				return ValidationError{
+					Err: fmt.Errorf("%w %s", ErrIntCantBeGreater, condition),
+				}
+			}
+			return nil
+		},
+		// 'max:32' - число не может быть больше 10;
+		"in": func(v reflect.Value, condition string) error {
+			if v.Kind() != reflect.Int {
+				// 'in' правило применимо только к целым
+				return fmt.Errorf("'%s' %w", "in", ErrOnlyIntRule)
+			}
+
+			cl := strings.Split(condition, ",")
+			if len(cl) < 1 {
+				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "in")
+			}
+
+			var isValid bool
+			for _, c := range cl {
+				i, err := strconv.ParseInt(c, 0, 0)
+				if err != nil {
+					// 'condition' недопустимое условие для правила 'in'
+					return fmt.Errorf("'%s' %w '%s': %w", condition, ErrInvalidCond, "in", err)
+				}
+
+				if v.Int() == i {
+					isValid = true
+					break
+				}
+			}
+
+			if !isValid {
+				return ValidationError{
+					Err: fmt.Errorf("%w %s", ErrIntNotIntList, condition),
+				}
+			}
+
+			return nil
 		},
 	},
 }

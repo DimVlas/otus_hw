@@ -17,6 +17,8 @@ var (
 var (
 	// правило применимо только к строкам
 	ErrOnlyStringRule = errors.New("rule applies only to the string")
+	// правило применимо только к целым
+	ErrOnlyIntRule = errors.New("rule applies only to the int")
 	// недопустимое условие для правила
 	ErrInvalidCond = errors.New("invalid condition for the rule")
 	// ошибка компиляции регулярного выражения
@@ -26,9 +28,21 @@ var (
 // ошибки валидации строк
 var (
 	// длина строки не равна
-	ErrLenNotEqual = errors.New("length of the string not equal to")
+	ErrStrLenNotEqual = errors.New("length of the string not equal to")
 	// строка не содержит совпадений с регулярным выражением
-	ErrReExpNotMatch = errors.New("string does not contain any matches to the regular expression")
+	ErrStrReExpNotMatch = errors.New("string does not contain any matches to the regular expression")
+	// строка на входит в список
+	ErrStrNotIntList = errors.New("string is not in the list")
+)
+
+// ошибки валидации целых
+var (
+	// целое не может быть меньше условия
+	ErrIntCantBeLess = errors.New("cannot be less")
+	// целое не содержит совпадений с регулярным выражением
+	ErrIntCantBeGreater = errors.New("cannot be greater")
+	// целое на входит в список
+	ErrIntNotIntList = errors.New("int is not in the list")
 )
 
 // ошибка валидации поля структуры

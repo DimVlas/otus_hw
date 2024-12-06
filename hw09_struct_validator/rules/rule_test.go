@@ -165,119 +165,285 @@ func (v *validatorTestData) validatorFunc() Validator {
 	return validators[v.kind][v.rule]
 }
 
-var validatorTests = []validatorTestData{
-	// Значение типа reflect.String, правило len
-	{
-		// неверный тип значения
-		name:   "string_len__err_bad_type_value_int",
-		kind:   reflect.String,
-		rule:   "len",
-		cond:   "0",
-		val:    reflect.ValueOf(123),
-		expErr: ErrOnlyStringRule,
-	},
-	{
-		// неверный тип значения
-		name: "string_len__err_bad_type_value_&string",
-		kind: reflect.String,
-		rule: "len",
-		cond: "0",
-		val: func() reflect.Value {
-			s := "abc"
-			return reflect.ValueOf(&s)
-		}(),
-		expErr: ErrOnlyStringRule,
-	},
-	{
-		// неверное условия для правила
-		name: "string_len__err_bad_condition",
-		kind: reflect.String,
-		rule: "len",
-		cond: "s",
-		val: func() reflect.Value {
-			s := "Мой милый дом!"
-			return reflect.ValueOf(s)
-		}(),
-		expErr: ErrInvalidCond,
-	},
-	{
-		// ошибка валидации - длина не соответствует
-		name: "string_len__err_validation_len_not_equal",
-		kind: reflect.String,
-		rule: "len",
-		cond: "5",
-		val: func() reflect.Value {
-			s := "Мой милый дом!"
-			return reflect.ValueOf(s)
-		}(),
-		expErr: ValidationError{
-			Err: ErrLenNotEqual,
+var (
+	// тесты для строк
+	validatorTestsString = []validatorTestData{
+		// len
+		{
+			// неверный тип значения
+			name:   "string_len__err_bad_type_value_int",
+			kind:   reflect.String,
+			rule:   "len",
+			cond:   "0",
+			val:    reflect.ValueOf(123),
+			expErr: ErrOnlyStringRule,
 		},
-	},
-	{
-		// успешная валидация
-		name: "string_len__success",
-		kind: reflect.String,
-		rule: "len",
-		cond: "5",
-		val: func() reflect.Value {
-			s := "милый"
-			return reflect.ValueOf(s)
-		}(),
-		expErr: nil,
-	},
-	// Значение типа reflect.String, правило regexp
-	{
-		// неверный тип значения
-		name:   "string_regexp__err_bad_type_value_int",
-		kind:   reflect.String,
-		rule:   "regexp",
-		cond:   "",
-		val:    reflect.ValueOf(123),
-		expErr: ErrOnlyStringRule,
-	},
-	{
-		// неверное условия для правила
-		name:   "string_regexp__err_bad_condition",
-		kind:   reflect.String,
-		rule:   "regexp",
-		cond:   "",
-		val:    reflect.ValueOf("Дом, милый дом!"),
-		expErr: ErrInvalidCond,
-	},
-	{
-		// неверное регулярное выражение
-		name:   "string_regexp__err_bad_regexp",
-		kind:   reflect.String,
-		rule:   "regexp",
-		cond:   `/[`,
-		val:    reflect.ValueOf("Дом, милый дом!"),
-		expErr: ErrRegexpCompile,
-	},
-	{
-		// ошибка валидации - нет совпадения с регулярным выражением
-		name: "string_regexp__err_validation_regexp_not_match",
-		kind: reflect.String,
-		rule: "regexp",
-		cond: `dam`,
-		val:  reflect.ValueOf("Дом, милый дом!"),
-		expErr: ValidationError{
-			Err: ErrReExpNotMatch,
+		{
+			// неверный тип значения
+			name: "string_len__err_bad_type_value_&string",
+			kind: reflect.String,
+			rule: "len",
+			cond: "0",
+			val: func() reflect.Value {
+				s := "abc"
+				return reflect.ValueOf(&s)
+			}(),
+			expErr: ErrOnlyStringRule,
 		},
-	},
-	{
-		// успешная валидация
-		name:   "string_regexp__success",
-		kind:   reflect.String,
-		rule:   "regexp",
-		cond:   `дом`,
-		val:    reflect.ValueOf("Дом, милый дом!"),
-		expErr: nil,
-	},
-}
+		{
+			// неверное условия для правила
+			name: "string_len__err_bad_condition",
+			kind: reflect.String,
+			rule: "len",
+			cond: "s",
+			val: func() reflect.Value {
+				s := "Мой милый дом!"
+				return reflect.ValueOf(s)
+			}(),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// ошибка валидации - длина не соответствует
+			name: "string_len__err_validation_len_not_equal",
+			kind: reflect.String,
+			rule: "len",
+			cond: "5",
+			val: func() reflect.Value {
+				s := "Мой милый дом!"
+				return reflect.ValueOf(s)
+			}(),
+			expErr: ValidationError{
+				Err: ErrStrLenNotEqual,
+			},
+		},
+		{
+			// успешная валидация
+			name: "string_len__success",
+			kind: reflect.String,
+			rule: "len",
+			cond: "5",
+			val: func() reflect.Value {
+				s := "милый"
+				return reflect.ValueOf(s)
+			}(),
+			expErr: nil,
+		},
+		// regexp
+		{
+			// неверный тип значения
+			name:   "string_regexp__err_bad_type_value_int",
+			kind:   reflect.String,
+			rule:   "regexp",
+			cond:   "",
+			val:    reflect.ValueOf(123),
+			expErr: ErrOnlyStringRule,
+		},
+		{
+			// неверное условия для правила
+			name:   "string_regexp__err_bad_condition",
+			kind:   reflect.String,
+			rule:   "regexp",
+			cond:   "",
+			val:    reflect.ValueOf("Дом, милый дом!"),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// неверное регулярное выражение
+			name:   "string_regexp__err_bad_regexp",
+			kind:   reflect.String,
+			rule:   "regexp",
+			cond:   `/[`,
+			val:    reflect.ValueOf("Дом, милый дом!"),
+			expErr: ErrRegexpCompile,
+		},
+		{
+			// ошибка валидации - нет совпадения с регулярным выражением
+			name: "string_regexp__err_validation_regexp_not_match",
+			kind: reflect.String,
+			rule: "regexp",
+			cond: `dam`,
+			val:  reflect.ValueOf("Дом, милый дом!"),
+			expErr: ValidationError{
+				Err: ErrStrReExpNotMatch,
+			},
+		},
+		{
+			// успешная валидация
+			name:   "string_regexp__success",
+			kind:   reflect.String,
+			rule:   "regexp",
+			cond:   `дом`,
+			val:    reflect.ValueOf("Дом, милый дом!"),
+			expErr: nil,
+		},
+		// in
+		{
+			// неверный тип значения
+			name:   "string_in__err_bad_type_value_int",
+			kind:   reflect.String,
+			rule:   "in",
+			cond:   "",
+			val:    reflect.ValueOf(123),
+			expErr: ErrOnlyStringRule,
+		},
+		{
+			// неверное условия для правила
+			name:   "string_in__err_bad_condition",
+			kind:   reflect.String,
+			rule:   "in",
+			cond:   "",
+			val:    reflect.ValueOf("милый"),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// ошибка валидации - нет значения поля в списке
+			name: "string_in__err_validation_not_in_list",
+			kind: reflect.String,
+			rule: "in",
+			cond: "sweet,honey",
+			val:  reflect.ValueOf("милый"),
+			expErr: ValidationError{
+				Err: ErrStrNotIntList,
+			},
+		},
+		{
+			// успешная валидация
+			name:   "string_in__success",
+			kind:   reflect.String,
+			rule:   "in",
+			cond:   "sweet,милый",
+			val:    reflect.ValueOf("милый"),
+			expErr: nil,
+		},
+	}
+	// тесты для целых
+	validatorTestsInt = []validatorTestData{
+		// min
+		{
+			// неверный тип значения
+			name:   "int_min__err_bad_type_value_string",
+			kind:   reflect.Int,
+			rule:   "min",
+			cond:   "10",
+			val:    reflect.ValueOf("123"),
+			expErr: ErrOnlyIntRule,
+		},
+		{
+			// неверное условия для правила
+			name:   "int_min__err_bad_condition",
+			kind:   reflect.Int,
+			rule:   "min",
+			cond:   "10,11",
+			val:    reflect.ValueOf(123),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// неверное условия для правила
+			name: "int_min__err_validation_not_less",
+			kind: reflect.Int,
+			rule: "min",
+			cond: "10",
+			val:  reflect.ValueOf(9),
+			expErr: ValidationError{
+				Err: ErrIntCantBeLess,
+			},
+		},
+		{
+			// неверное условия для правила
+			name:   "int_min__succes",
+			kind:   reflect.Int,
+			rule:   "min",
+			cond:   "10",
+			val:    reflect.ValueOf(123),
+			expErr: nil,
+		},
+		// max
+		{
+			// неверный тип значения
+			name:   "int_max__err_bad_type_value_string",
+			kind:   reflect.Int,
+			rule:   "max",
+			cond:   "10",
+			val:    reflect.ValueOf("123"),
+			expErr: ErrOnlyIntRule,
+		},
+		{
+			// неверное условия для правила
+			name:   "int_max__err_bad_condition",
+			kind:   reflect.Int,
+			rule:   "max",
+			cond:   " ",
+			val:    reflect.ValueOf(123),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// неверное условия для правила
+			name: "int_max__err_validation_not_less",
+			kind: reflect.Int,
+			rule: "max",
+			cond: "10",
+			val:  reflect.ValueOf(11),
+			expErr: ValidationError{
+				Err: ErrIntCantBeGreater,
+			},
+		},
+		{
+			// неверное условия для правила
+			name:   "int_max__succes",
+			kind:   reflect.Int,
+			rule:   "max",
+			cond:   "10",
+			val:    reflect.ValueOf(9),
+			expErr: nil,
+		},
+		// in
+		{
+			// неверный тип значения
+			name:   "int_in__err_bad_type_value_string",
+			kind:   reflect.Int,
+			rule:   "in",
+			cond:   "10",
+			val:    reflect.ValueOf("123"),
+			expErr: ErrOnlyIntRule,
+		},
+		{
+			// неверное условия для правила
+			name:   "int_in__err_bad_condition",
+			kind:   reflect.Int,
+			rule:   "in",
+			cond:   "12,aa,45 ",
+			val:    reflect.ValueOf(123),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// провал валидации
+			name: "int_in__err_validation_not_in_list",
+			kind: reflect.Int,
+			rule: "in",
+			cond: "10,12",
+			val:  reflect.ValueOf(11),
+			expErr: ValidationError{
+				Err: ErrIntNotIntList,
+			},
+		},
+		{
+			// успешная валидация
+			name:   "int_in__succes",
+			kind:   reflect.Int,
+			rule:   "in",
+			cond:   "9,10,11",
+			val:    reflect.ValueOf(9),
+			expErr: nil,
+		},
+	}
+)
 
 func TestValidator(t *testing.T) {
-	for _, test := range validatorTests {
+	validatorTest := make([]validatorTestData, 0, len(validatorTestsString)+len(validatorTestsInt))
+	validatorTest = append(validatorTest, validatorTestsString...)
+	validatorTest = append(validatorTest, validatorTestsInt...)
+
+	for _, test := range validatorTest {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.validatorFunc()(test.val, test.cond)
 
