@@ -15,10 +15,10 @@ var (
 
 // программные ошибки функций валидации
 var (
-	// правило применимо только к строкам
-	ErrOnlyStringRule = errors.New("rule applies only to the string")
-	// правило применимо только к целым
-	ErrOnlyIntRule = errors.New("rule applies only to the int")
+	// // правило применимо только к строкам
+	// ErrOnlyStringRule = errors.New("rule applies only to the string")
+	// // правило применимо только к целым
+	// ErrOnlyIntRule = errors.New("rule applies only to the int")
 	// недопустимое условие для правила
 	ErrInvalidCond = errors.New("invalid condition for the rule")
 	// ошибка компиляции регулярного выражения

@@ -170,27 +170,6 @@ var (
 	validatorTestsString = []validatorTestData{
 		// len
 		{
-			// неверный тип значения
-			name:   "string_len__err_bad_type_value_int",
-			kind:   reflect.String,
-			rule:   "len",
-			cond:   "0",
-			val:    reflect.ValueOf(123),
-			expErr: ErrOnlyStringRule,
-		},
-		{
-			// неверный тип значения
-			name: "string_len__err_bad_type_value_&string",
-			kind: reflect.String,
-			rule: "len",
-			cond: "0",
-			val: func() reflect.Value {
-				s := "abc"
-				return reflect.ValueOf(&s)
-			}(),
-			expErr: ErrOnlyStringRule,
-		},
-		{
 			// неверное условия для правила
 			name: "string_len__err_bad_condition",
 			kind: reflect.String,
@@ -229,15 +208,6 @@ var (
 			expErr: nil,
 		},
 		// regexp
-		{
-			// неверный тип значения
-			name:   "string_regexp__err_bad_type_value_int",
-			kind:   reflect.String,
-			rule:   "regexp",
-			cond:   "",
-			val:    reflect.ValueOf(123),
-			expErr: ErrOnlyStringRule,
-		},
 		{
 			// неверное условия для правила
 			name:   "string_regexp__err_bad_condition",
@@ -278,15 +248,6 @@ var (
 		},
 		// in
 		{
-			// неверный тип значения
-			name:   "string_in__err_bad_type_value_int",
-			kind:   reflect.String,
-			rule:   "in",
-			cond:   "",
-			val:    reflect.ValueOf(123),
-			expErr: ErrOnlyStringRule,
-		},
-		{
 			// неверное условия для правила
 			name:   "string_in__err_bad_condition",
 			kind:   reflect.String,
@@ -320,15 +281,6 @@ var (
 	validatorTestsInt = []validatorTestData{
 		// min
 		{
-			// неверный тип значения
-			name:   "int_min__err_bad_type_value_string",
-			kind:   reflect.Int,
-			rule:   "min",
-			cond:   "10",
-			val:    reflect.ValueOf("123"),
-			expErr: ErrOnlyIntRule,
-		},
-		{
 			// неверное условия для правила
 			name:   "int_min__err_bad_condition",
 			kind:   reflect.Int,
@@ -359,15 +311,6 @@ var (
 		},
 		// max
 		{
-			// неверный тип значения
-			name:   "int_max__err_bad_type_value_string",
-			kind:   reflect.Int,
-			rule:   "max",
-			cond:   "10",
-			val:    reflect.ValueOf("123"),
-			expErr: ErrOnlyIntRule,
-		},
-		{
 			// неверное условия для правила
 			name:   "int_max__err_bad_condition",
 			kind:   reflect.Int,
@@ -397,15 +340,6 @@ var (
 			expErr: nil,
 		},
 		// in
-		{
-			// неверный тип значения
-			name:   "int_in__err_bad_type_value_string",
-			kind:   reflect.Int,
-			rule:   "in",
-			cond:   "10",
-			val:    reflect.ValueOf("123"),
-			expErr: ErrOnlyIntRule,
-		},
 		{
 			// неверное условия для правила
 			name:   "int_in__err_bad_condition",
