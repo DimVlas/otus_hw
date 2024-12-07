@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -166,11 +167,11 @@ func (v *validatorTestData) validatorFunc() Validator {
 }
 
 var (
-	// тесты для строк
+	// тесты для строк.
 	validatorTestsString = []validatorTestData{
-		// len
+		// len.
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name: "string_len__err_bad_condition",
 			kind: reflect.String,
 			rule: "len",
@@ -182,7 +183,7 @@ var (
 			expErr: ErrInvalidCond,
 		},
 		{
-			// ошибка валидации - длина не соответствует
+			// ошибка валидации - длина не соответствует.
 			name: "string_len__err_validation_len_not_equal",
 			kind: reflect.String,
 			rule: "len",
@@ -196,7 +197,7 @@ var (
 			},
 		},
 		{
-			// успешная валидация
+			// успешная валидация.
 			name: "string_len__success",
 			kind: reflect.String,
 			rule: "len",
@@ -207,9 +208,9 @@ var (
 			}(),
 			expErr: nil,
 		},
-		// regexp
+		// regexp.
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "string_regexp__err_bad_condition",
 			kind:   reflect.String,
 			rule:   "regexp",
@@ -218,7 +219,7 @@ var (
 			expErr: ErrInvalidCond,
 		},
 		{
-			// неверное регулярное выражение
+			// неверное регулярное выражение.
 			name:   "string_regexp__err_bad_regexp",
 			kind:   reflect.String,
 			rule:   "regexp",
@@ -227,7 +228,7 @@ var (
 			expErr: ErrRegexpCompile,
 		},
 		{
-			// ошибка валидации - нет совпадения с регулярным выражением
+			// ошибка валидации - нет совпадения с регулярным выражением.
 			name: "string_regexp__err_validation_regexp_not_match",
 			kind: reflect.String,
 			rule: "regexp",
@@ -238,7 +239,7 @@ var (
 			},
 		},
 		{
-			// успешная валидация
+			// успешная валидация.
 			name:   "string_regexp__success",
 			kind:   reflect.String,
 			rule:   "regexp",
@@ -246,9 +247,9 @@ var (
 			val:    reflect.ValueOf("Дом, милый дом!"),
 			expErr: nil,
 		},
-		// in
+		// in.
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "string_in__err_bad_condition",
 			kind:   reflect.String,
 			rule:   "in",
@@ -257,7 +258,7 @@ var (
 			expErr: ErrInvalidCond,
 		},
 		{
-			// ошибка валидации - нет значения поля в списке
+			// ошибка валидации - нет значения поля в списке.
 			name: "string_in__err_validation_not_in_list",
 			kind: reflect.String,
 			rule: "in",
@@ -268,7 +269,7 @@ var (
 			},
 		},
 		{
-			// успешная валидация
+			// успешная валидация.
 			name:   "string_in__success",
 			kind:   reflect.String,
 			rule:   "in",
@@ -277,11 +278,11 @@ var (
 			expErr: nil,
 		},
 	}
-	// тесты для целых
+	// тесты для целых.
 	validatorTestsInt = []validatorTestData{
-		// min
+		// min.
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "int_min__err_bad_condition",
 			kind:   reflect.Int,
 			rule:   "min",
@@ -290,7 +291,7 @@ var (
 			expErr: ErrInvalidCond,
 		},
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name: "int_min__err_validation_not_less",
 			kind: reflect.Int,
 			rule: "min",
@@ -301,7 +302,7 @@ var (
 			},
 		},
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "int_min__succes",
 			kind:   reflect.Int,
 			rule:   "min",
@@ -311,7 +312,7 @@ var (
 		},
 		// max
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "int_max__err_bad_condition",
 			kind:   reflect.Int,
 			rule:   "max",
@@ -320,7 +321,7 @@ var (
 			expErr: ErrInvalidCond,
 		},
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name: "int_max__err_validation_not_less",
 			kind: reflect.Int,
 			rule: "max",
@@ -331,7 +332,7 @@ var (
 			},
 		},
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "int_max__succes",
 			kind:   reflect.Int,
 			rule:   "max",
@@ -341,7 +342,7 @@ var (
 		},
 		// in
 		{
-			// неверное условия для правила
+			// неверное условия для правила.
 			name:   "int_in__err_bad_condition",
 			kind:   reflect.Int,
 			rule:   "in",
@@ -350,7 +351,7 @@ var (
 			expErr: ErrInvalidCond,
 		},
 		{
-			// провал валидации
+			// провал валидации.
 			name: "int_in__err_validation_not_in_list",
 			kind: reflect.Int,
 			rule: "in",
@@ -361,7 +362,7 @@ var (
 			},
 		},
 		{
-			// успешная валидация
+			// успешная валидация.
 			name:   "int_in__succes",
 			kind:   reflect.Int,
 			rule:   "in",
@@ -386,7 +387,8 @@ func TestValidator(t *testing.T) {
 				return
 			}
 
-			if e, ok := test.expErr.(ValidationError); ok {
+			var e ValidationError
+			if errors.As(test.expErr, &e) {
 				require.ErrorIs(t, err, e.Err)
 				return
 			}

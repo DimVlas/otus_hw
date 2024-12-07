@@ -9,13 +9,13 @@ import (
 	"unicode/utf8"
 )
 
-// Описание правила проверки
+// Описание правила проверки.
 type RuleInfo struct {
 	Name string // правило проверки
 	Cond string // условие правила проверки
 }
 
-// правила проверки поля
+// правила проверки поля.
 type FieldRules struct {
 	FieldName string     // наименование поля
 	Rules     []RuleInfo // слайс правил проверки
@@ -30,14 +30,14 @@ type FieldRules struct {
 // если занчение v не удовлетворяет условию, вернется ошибка типа ValidationError с пустым полем ValidationError.Field.
 type Validator func(v reflect.Value, condition string) error
 
-// маппа в которой по типам полей содержится маппа с типами правил и функциями валидации для каждого типа правила
+// маппа в которой по типам полей содержится маппа с типами правил и функциями валидации для каждого типа правила.
 var validators = map[reflect.Kind]map[string]Validator{
 	reflect.String: {
-		// 'len:32' - проверка длины строки должна быть 32 символа
+		// 'len:32' - проверка длины строки должна быть 32 символа.
 		"len": func(v reflect.Value, condition string) error {
 			c, err := strconv.Atoi(condition)
 			if err != nil {
-				// 'condition' недопустимое условие для правила 'len'
+				// 'condition' недопустимое условие для правила 'len'.
 				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "len")
 			}
 
@@ -50,7 +50,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 		},
 		"regexp": func(v reflect.Value, condition string) error {
 			if condition == "" {
-				// 'condition' недопустимое условие для правила 'regexp'
+				// 'condition' недопустимое условие для правила 'regexp'.
 				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "regexp")
 			}
 
@@ -68,7 +68,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 		},
 		"in": func(v reflect.Value, condition string) error {
 			if condition == "" {
-				// 'condition' недопустимое условие для правила 'regexp'
+				// 'condition' недопустимое условие для правила 'regexp'.
 				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "in")
 			}
 
@@ -82,11 +82,11 @@ var validators = map[reflect.Kind]map[string]Validator{
 		},
 	},
 	reflect.Int: {
-		// 'min:32' - число не может быть меньше 10;
+		// 'min:32' - число не может быть меньше 10.
 		"min": func(v reflect.Value, condition string) error {
 			c, err := strconv.ParseInt(condition, 0, 0)
 			if err != nil {
-				// 'condition' недопустимое условие для правила 'min'
+				// 'condition' недопустимое условие для правила 'min'.
 				return fmt.Errorf("'%s' %w '%s': %w", condition, ErrInvalidCond, "min", err)
 			}
 
@@ -97,11 +97,11 @@ var validators = map[reflect.Kind]map[string]Validator{
 			}
 			return nil
 		},
-		// 'max:32' - число не может быть больше 10;
+		// 'max:32' - число не может быть больше 10.
 		"max": func(v reflect.Value, condition string) error {
 			c, err := strconv.ParseInt(condition, 0, 0)
 			if err != nil {
-				// 'condition' недопустимое условие для правила 'min'
+				// 'condition' недопустимое условие для правила 'min'.
 				return fmt.Errorf("'%s' %w '%s': %w", condition, ErrInvalidCond, "max", err)
 			}
 
@@ -112,7 +112,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 			}
 			return nil
 		},
-		// 'max:32' - число не может быть больше 10;
+		// 'max:32' - число не может быть больше 10.
 		"in": func(v reflect.Value, condition string) error {
 			cl := strings.Split(condition, ",")
 			if len(cl) < 1 {
@@ -123,7 +123,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 			for _, c := range cl {
 				i, err := strconv.ParseInt(c, 0, 0)
 				if err != nil {
-					// 'condition' недопустимое условие для правила 'in'
+					// 'condition' недопустимое условие для правила 'in'.
 					return fmt.Errorf("'%s' %w '%s': %w", condition, ErrInvalidCond, "in", err)
 				}
 
@@ -144,7 +144,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 	},
 }
 
-// возвращает функцию валидации для типа kind и правила rule
+// возвращает функцию валидации для типа kind и правила rule.
 func validationFunction(kind reflect.Kind, rule string) (Validator, error) {
 	r, ok := validators[kind]
 	if !ok {
@@ -159,7 +159,7 @@ func validationFunction(kind reflect.Kind, rule string) (Validator, error) {
 	return fv, nil
 }
 
-// получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName
+// получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName.
 func fieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
 	rls, err := parseRulesTag(fieldTag)
 	if err != nil {
@@ -176,18 +176,18 @@ func fieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
 }
 
 // парсит полученную строку, возвращая массив структур с описанием правил проверки.
-// ожидается, что строка имеет вид 'правило:условие|правило:условие|...'
+// ожидается, что строка имеет вид 'правило:условие|правило:условие|...'.
 func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
 	rulesTag = strings.Trim(rulesTag, " ")
 	if rulesTag == "" {
 		return []RuleInfo{}, nil
 	}
 
-	// Разбили на отдельные описания правила: строки вида 'правило:условие'
+	// Разбили на отдельные описания правила: строки вида 'правило:условие'.
 	rs := strings.Split(rulesTag, "|")
 
 	ri := []RuleInfo{}
-	// из каждого описания правила выделяем имя правила и условие
+	// из каждого описания правила выделяем имя правила и условие.
 	for _, r := range rs {
 		if len(r) == 0 {
 			return []RuleInfo{}, ErrEmptyRule

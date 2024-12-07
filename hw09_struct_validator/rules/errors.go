@@ -13,39 +13,39 @@ var (
 	ErrKindNoRules      = errors.New("for this field kind no validation rules")
 )
 
-// программные ошибки функций валидации
 var (
+	// программные ошибки функций валидации.
 	// // правило применимо только к строкам
 	// ErrOnlyStringRule = errors.New("rule applies only to the string")
 	// // правило применимо только к целым
 	// ErrOnlyIntRule = errors.New("rule applies only to the int")
-	// недопустимое условие для правила
+	// недопустимое условие для правила.
 	ErrInvalidCond = errors.New("invalid condition for the rule")
-	// ошибка компиляции регулярного выражения
+	// ошибка компиляции регулярного выражения.
 	ErrRegexpCompile = errors.New("regex compilation error")
 )
 
-// ошибки валидации строк
+// ошибки валидации строк.
 var (
-	// длина строки не равна
+	// длина строки не равна.
 	ErrStrLenNotEqual = errors.New("length of the string not equal to")
-	// строка не содержит совпадений с регулярным выражением
+	// строка не содержит совпадений с регулярным выражением.
 	ErrStrReExpNotMatch = errors.New("string does not contain any matches to the regular expression")
-	// строка на входит в список
+	// строка на входит в список.
 	ErrStrNotIntList = errors.New("string is not in the list")
 )
 
-// ошибки валидации целых
+// ошибки валидации целых.
 var (
-	// целое не может быть меньше условия
+	// целое не может быть меньше условия.
 	ErrIntCantBeLess = errors.New("cannot be less")
-	// целое не содержит совпадений с регулярным выражением
+	// целое не содержит совпадений с регулярным выражением.
 	ErrIntCantBeGreater = errors.New("cannot be greater")
-	// целое на входит в список
+	// целое на входит в список.
 	ErrIntNotIntList = errors.New("int is not in the list")
 )
 
-// ошибка валидации поля структуры
+// ошибка валидации поля структуры.
 type ValidationError struct {
 	Field string
 	Err   error
@@ -62,7 +62,7 @@ func (v ValidationError) Unwrap() error {
 	return v.Err
 }
 
-// слайс ошибок валидации полей структуры
+// слайс ошибок валидации полей структуры.
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
