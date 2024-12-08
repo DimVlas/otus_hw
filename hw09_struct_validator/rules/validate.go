@@ -24,15 +24,21 @@ func ValidateStruct(v reflect.Value) error {
 			continue
 		}
 
-		// валидируем поле структуры.
-		if err := validateField(f, v.Field(i)); err != nil {
-			var e ValidationErrors
-			if errors.As(err, &e) {
-				errStructValid = append(errStructValid, e...)
-				continue
-			}
+		// получаем набор правил для поля
+		fieldRules, err := fieldRulesByTag(f.Name, f.Tag.Get("validate"))
+		if err != nil {
 			return err
 		}
+		// если нет правил, то и проверять нечего.
+		if len(fieldRules.Rules) < 1 {
+			return nil
+		}
+
+		errField, err := validateField(v, fieldRules)
+		if err != nil {
+			return err
+		}
+		errStructValid = append(errStructValid, errField...)
 	}
 
 	if len(errStructValid) > 0 {
@@ -43,21 +49,41 @@ func ValidateStruct(v reflect.Value) error {
 }
 
 // валидирует поле структуры.
-func validateField(fieldInfo reflect.StructField, fieldValue reflect.Value) error {
-	fieldRules, err := fieldRulesByTag(fieldInfo.Name, fieldInfo.Tag.Get("validate"))
-	if err != nil {
-		return err
+func validateField(fieldValue reflect.Value, rules FieldRules) (ValidationErrors, error) {
+	switch fieldValue.Kind() {
+	case reflect.Slice, reflect.Array:
+		return validateSlice(fieldValue, rules)
+	default:
+		return validateValue(fieldValue, rules)
 	}
-	// если не правил, то и проверять нечего.
-	if len(fieldRules.Rules) < 1 {
-		return nil
+}
+
+func validateSlice(fieldValue reflect.Value, rules FieldRules) (ValidationErrors, error) {
+	l := fieldValue.Len()
+	if l < 1 {
+		return nil, nil
 	}
 
-	return validateFieldValue(fieldValue, fieldRules)
+	var vErr = make(ValidationErrors, l)
+	for i := 0; i < l; i++ {
+		v, err := validateValue(fieldValue.Index(i), rules)
+		if err != nil {
+			return nil, err
+		}
+		if v != nil {
+			vErr = append(vErr, v...)
+		}
+	}
+
+	if len(vErr) > 0 {
+		return vErr, nil
+	}
+
+	return nil, nil
 }
 
 // валидируем поле со значение fieldValue, согласно правил описанных fieldRules.
-func validateFieldValue(fieldValue reflect.Value, fieldRules FieldRules) error {
+func validateValue(fieldValue reflect.Value, fieldRules FieldRules) (ValidationErrors, error) {
 	var errFields = ValidationErrors{}
 
 	// перебираем все правила
@@ -65,11 +91,11 @@ func validateFieldValue(fieldValue reflect.Value, fieldRules FieldRules) error {
 		// получаем функцию валидации.
 		vf, err := validationFunction(fieldValue.Kind(), rule.Name)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
 		// проверяем fieldValue функцией валидации.
 		err = vf(fieldValue, rule.Cond)
+
 		// если нет ошибок - переходим к следующему правилу.
 		if err == nil {
 			continue
@@ -82,13 +108,13 @@ func validateFieldValue(fieldValue reflect.Value, fieldRules FieldRules) error {
 			continue
 		}
 		// если программная ошибка - возращаем ее, выходим.
-		return err
+		return nil, err
 	}
 
 	// если были ошибки валидации - возращаем их.
 	if len(errFields) > 0 {
-		return errFields
+		return errFields, nil
 	}
 
-	return nil
+	return nil, nil
 }
