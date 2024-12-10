@@ -112,7 +112,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 			}
 			return nil
 		},
-		// 'max:32' - число не может быть больше 10.
+		// 'in:32,33' - число не входит в список 32,33.
 		"in": func(v reflect.Value, condition string) error {
 			cl := strings.Split(condition, ",")
 			if len(cl) < 1 {

@@ -29,12 +29,14 @@ func ValidateStruct(v reflect.Value) error {
 		if err != nil {
 			return err
 		}
+
 		// если нет правил, то и проверять нечего.
 		if len(fieldRules.Rules) < 1 {
-			return nil
+			continue
 		}
 
-		errField, err := validateField(v, fieldRules)
+		errField, err := validateField(v.Field(i), fieldRules)
+
 		if err != nil {
 			return err
 		}

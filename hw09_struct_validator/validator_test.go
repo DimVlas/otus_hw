@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/DimVlas/otus_hw/hw09_struct_validator/rules"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -42,10 +46,45 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in: Response{
+				Code: 200,
+				Body: "{}",
+			},
+			expectedErr: nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			in: Response{
+				Code: 100,
+				Body: "{}",
+			},
+			expectedErr: rules.ValidationErrors{
+				rules.ValidationError{
+					Field: "Code",
+					Err:   fmt.Errorf("%w 200,404,500", rules.ErrIntNotIntList),
+				},
+			},
+		},
+		{
+			in:          Token{},
+			expectedErr: nil,
+		},
+		{
+			in: App{
+				Version: "qwert",
+			},
+			expectedErr: nil,
+		},
+		{
+			in: App{
+				Version: "qwerty",
+			},
+			expectedErr: rules.ValidationErrors{
+				rules.ValidationError{
+					Field: "Version",
+					Err:   fmt.Errorf("%w 5", rules.ErrStrLenNotEqual),
+				},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +92,16 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+
+			if tt.expectedErr == nil {
+				require.NoError(t, err)
+				return
+			}
+
+			if assert.Error(t, err) {
+				require.EqualError(t, err, tt.expectedErr.Error())
+			}
 		})
 	}
 }

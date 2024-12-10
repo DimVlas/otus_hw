@@ -3,6 +3,7 @@ package rules
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -70,5 +71,14 @@ func (v ValidationErrors) Error() string {
 	if cnt < 1 {
 		return ""
 	}
-	return fmt.Sprintf("%d structure validation errors found", cnt)
+
+	return func() string {
+		s := strings.Builder{}
+		for _, e := range v {
+			s.WriteString(fmt.Sprintf("field %s: %s\n", e.Field, e.Err.Error()))
+		}
+		return s.String()
+	}()
+
+	//fmt.Sprintf("%d structure validation errors found", cnt)
 }
