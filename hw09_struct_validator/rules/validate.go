@@ -53,11 +53,33 @@ func validateField(fieldValue reflect.Value, rules FieldRules) (ValidationErrors
 	switch fieldValue.Kind() {
 	case reflect.Slice, reflect.Array:
 		return validateSlice(fieldValue, rules)
+	case reflect.Struct:
+		if len(rules.Rules) == 1 && rules.Rules[0].Name == "nested" {
+			return validateStruct(fieldValue, rules)
+		}
+		return nil, nil
 	default:
 		return validateValue(fieldValue, rules)
 	}
 }
 
+// валидирует вложенную структуру
+func validateStruct(fieldValue reflect.Value, _ FieldRules) (ValidationErrors, error) {
+	err := ValidateStruct(fieldValue)
+
+	if err != nil {
+		var e ValidationErrors
+		if errors.As(err, &e) {
+			return e, nil
+		}
+
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// валидирует slice или массив
 func validateSlice(fieldValue reflect.Value, rules FieldRules) (ValidationErrors, error) {
 	l := fieldValue.Len()
 	if l < 1 {
