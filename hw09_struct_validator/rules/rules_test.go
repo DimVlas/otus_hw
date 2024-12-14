@@ -70,7 +70,7 @@ func TestValidationFunction(t *testing.T) {
 	}
 }
 
-func TestFieldRulesByTag(t *testing.T) {
+func TestRulesByTag(t *testing.T) {
 	type testData struct {
 		name  string
 		field string
