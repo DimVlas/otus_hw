@@ -53,7 +53,7 @@ func TestValidationFunction(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			fn, err := validationFunction(test.kind, test.cond)
+			fn, err := ValidationFunction(test.kind, test.cond)
 
 			if test.expIsNil {
 				require.Nil(t, fn, test.mess)
@@ -140,7 +140,7 @@ func TestFieldRulesByTag(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r, err := fieldRulesByTag(test.field, test.tag)
+			r, err := RulesByTag(test.field, test.tag)
 
 			require.Equal(t, test.exp, r, test.mess)
 
@@ -347,6 +347,15 @@ var (
 			kind:   reflect.Int,
 			rule:   "in",
 			cond:   "12,aa,45 ",
+			val:    reflect.ValueOf(123),
+			expErr: ErrInvalidCond,
+		},
+		{
+			// неверное пустое условия для правила.
+			name:   "int_in__err_empty_bad_condition",
+			kind:   reflect.Int,
+			rule:   "in",
+			cond:   "",
 			val:    reflect.ValueOf(123),
 			expErr: ErrInvalidCond,
 		},

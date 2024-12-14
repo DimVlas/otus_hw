@@ -52,6 +52,9 @@ type ValidationError struct {
 	Err   error
 }
 
+// слайс ошибок валидации полей структуры.
+type ValidationErrors []ValidationError
+
 func (v ValidationError) Error() string {
 	if len(v.Field) == 0 {
 		return fmt.Sprintf("%v", v.Err)
@@ -62,9 +65,6 @@ func (v ValidationError) Error() string {
 func (v ValidationError) Unwrap() error {
 	return v.Err
 }
-
-// слайс ошибок валидации полей структуры.
-type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
 	cnt := len(v)
@@ -79,6 +79,4 @@ func (v ValidationErrors) Error() string {
 		}
 		return s.String()
 	}()
-
-	//fmt.Sprintf("%d structure validation errors found", cnt)
 }

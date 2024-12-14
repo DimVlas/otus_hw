@@ -115,10 +115,6 @@ var validators = map[reflect.Kind]map[string]Validator{
 		// 'in:32,33' - число не входит в список 32,33.
 		"in": func(v reflect.Value, condition string) error {
 			cl := strings.Split(condition, ",")
-			if len(cl) < 1 {
-				return fmt.Errorf("'%s' %w '%s'", condition, ErrInvalidCond, "in")
-			}
-
 			var isValid bool
 			for _, c := range cl {
 				i, err := strconv.ParseInt(c, 0, 0)
@@ -145,7 +141,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 }
 
 // возвращает функцию валидации для типа kind и правила rule.
-func validationFunction(kind reflect.Kind, rule string) (Validator, error) {
+func ValidationFunction(kind reflect.Kind, rule string) (Validator, error) {
 	r, ok := validators[kind]
 	if !ok {
 		return nil, fmt.Errorf("'%s' %w", kind, ErrKindNoRules)
@@ -160,7 +156,7 @@ func validationFunction(kind reflect.Kind, rule string) (Validator, error) {
 }
 
 // получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName.
-func fieldRulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
+func RulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
 	rls, err := parseRulesTag(fieldTag)
 	if err != nil {
 		return FieldRules{
