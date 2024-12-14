@@ -74,7 +74,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 
 			if !strings.Contains(condition, v.String()) {
 				return ValidationError{
-					Err: fmt.Errorf("%w '%s'", ErrStrNotIntList, condition),
+					Err: fmt.Errorf("%w '%s'", ErrStrNotInList, condition),
 				}
 			}
 
@@ -135,7 +135,7 @@ var validators = map[reflect.Kind]map[string]Validator{
 
 			if !isValid {
 				return ValidationError{
-					Err: fmt.Errorf("%w %s", ErrIntNotIntList, condition),
+					Err: fmt.Errorf("%w %s", ErrIntNotInList, condition),
 				}
 			}
 

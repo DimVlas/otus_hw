@@ -60,7 +60,7 @@ func TestValidate(t *testing.T) {
 			expectedErr: rules.ValidationErrors{
 				rules.ValidationError{
 					Field: "Code",
-					Err:   fmt.Errorf("%w 200,404,500", rules.ErrIntNotIntList),
+					Err:   fmt.Errorf("%w 200,404,500", rules.ErrIntNotInList),
 				},
 			},
 		},
@@ -82,6 +82,47 @@ func TestValidate(t *testing.T) {
 				rules.ValidationError{
 					Field: "Version",
 					Err:   fmt.Errorf("%w 5", rules.ErrStrLenNotEqual),
+				},
+			},
+		},
+		{
+			in: User{
+				ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
+				Name:   "User1",
+				Age:    18,
+				Email:  "User1@mail.com",
+				Role:   "admin",
+				Phones: []string{"12345678901", "98765432101"},
+				meta:   json.RawMessage(``),
+			},
+			expectedErr: nil,
+		},
+		{
+			in: User{
+				ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
+				Name:   "User1",
+				Age:    16,
+				Email:  "User1@mail.com.dot",
+				Role:   "employee",
+				Phones: []string{"12345678901", "9876543210"},
+				meta:   json.RawMessage(``),
+			},
+			expectedErr: rules.ValidationErrors{
+				rules.ValidationError{
+					Field: "Age",
+					Err:   fmt.Errorf("%w 18", rules.ErrIntCantBeLess),
+				},
+				rules.ValidationError{
+					Field: "Email",
+					Err:   fmt.Errorf("%w %s", rules.ErrStrReExpNotMatch, "'^\\w+@\\w+\\.\\w+$'"),
+				},
+				rules.ValidationError{
+					Field: "Role",
+					Err:   fmt.Errorf("%w %s", rules.ErrStrNotInList, "'admin,stuff'"),
+				},
+				rules.ValidationError{
+					Field: "Phones",
+					Err:   fmt.Errorf("%w %v", rules.ErrStrLenNotEqual, 11),
 				},
 			},
 		},

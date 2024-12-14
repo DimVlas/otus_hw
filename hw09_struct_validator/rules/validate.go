@@ -15,7 +15,6 @@ func ValidateStruct(v reflect.Value) error {
 	}
 
 	var errStructValid = ValidationErrors{}
-
 	// идем по полям структуры
 	for i := range cnt {
 		f := v.Type().Field(i)
@@ -29,18 +28,18 @@ func ValidateStruct(v reflect.Value) error {
 		if err != nil {
 			return err
 		}
-
 		// если нет правил, то и проверять нечего.
 		if len(fieldRules.Rules) < 1 {
 			continue
 		}
 
 		errField, err := validateField(v.Field(i), fieldRules)
-
 		if err != nil {
 			return err
 		}
-		errStructValid = append(errStructValid, errField...)
+		if len(errField) > 0 {
+			errStructValid = append(errStructValid, errField...)
+		}
 	}
 
 	if len(errStructValid) > 0 {
@@ -83,13 +82,14 @@ func validateStruct(fieldValue reflect.Value, _ FieldRules) (ValidationErrors, e
 
 // валидирует slice или массив
 func validateSlice(fieldValue reflect.Value, rules FieldRules) (ValidationErrors, error) {
-	l := fieldValue.Len()
-	if l < 1 {
+	ln := fieldValue.Len()
+	if ln < 1 {
 		return nil, nil
 	}
 
-	var vErr = make(ValidationErrors, l)
-	for i := 0; i < l; i++ {
+	var vErr = make(ValidationErrors, 0)
+	for i := 0; i < ln; i++ {
+
 		v, err := validateValue(fieldValue.Index(i), rules)
 		if err != nil {
 			return nil, err

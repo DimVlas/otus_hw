@@ -265,7 +265,7 @@ var (
 			cond: "sweet,honey",
 			val:  reflect.ValueOf("милый"),
 			expErr: ValidationError{
-				Err: ErrStrNotIntList,
+				Err: ErrStrNotInList,
 			},
 		},
 		{
@@ -358,7 +358,7 @@ var (
 			cond: "10,12",
 			val:  reflect.ValueOf(11),
 			expErr: ValidationError{
-				Err: ErrIntNotIntList,
+				Err: ErrIntNotInList,
 			},
 		},
 		{

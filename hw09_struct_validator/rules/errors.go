@@ -33,7 +33,7 @@ var (
 	// строка не содержит совпадений с регулярным выражением.
 	ErrStrReExpNotMatch = errors.New("string does not contain any matches to the regular expression")
 	// строка на входит в список.
-	ErrStrNotIntList = errors.New("string is not in the list")
+	ErrStrNotInList = errors.New("string is not in the list")
 )
 
 // ошибки валидации целых.
@@ -43,7 +43,7 @@ var (
 	// целое не содержит совпадений с регулярным выражением.
 	ErrIntCantBeGreater = errors.New("cannot be greater")
 	// целое на входит в список.
-	ErrIntNotIntList = errors.New("int is not in the list")
+	ErrIntNotInList = errors.New("int is not in the list")
 )
 
 // ошибка валидации поля структуры.
