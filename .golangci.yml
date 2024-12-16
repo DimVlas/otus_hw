@@ -14,7 +14,10 @@ linters-settings:
         allow:
           - github.com/DimVlas/otus_hw/hw09_struct_validator/rules
           - github.com/stretchr/testify/require
+          - github.com/stretchr/testify/assert
           - $gostd
+  exhaustive:
+    explicit-exhaustive-switch: true
   gci:
     custom-order: true
     no-lex-order: true

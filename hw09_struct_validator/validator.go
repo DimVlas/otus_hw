@@ -5,7 +5,6 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/DimVlas/otus_hw/hw09_struct_validator/rules"
 	r "github.com/DimVlas/otus_hw/hw09_struct_validator/rules"
 )
 
@@ -30,7 +29,7 @@ func Validate(v interface{}) error {
 	rval := reflect.ValueOf(v)
 
 	if rval.Kind() != reflect.Struct {
-		return rules.ErrRequireStruct
+		return r.ErrRequireStruct
 	}
 
 	return validateStruct(rval)
@@ -45,7 +44,7 @@ func validateStruct(v reflect.Value) error {
 		return nil
 	}
 
-	var errStructValid = r.ValidationErrors{}
+	var errStructValid r.ValidationErrors
 	// идем по полям структуры
 	for i := range cnt {
 		f := v.Type().Field(i)
@@ -55,7 +54,7 @@ func validateStruct(v reflect.Value) error {
 		}
 
 		// получаем набор правил для поля
-		fieldRules, err := r.RulesByTag(f.Name, f.Tag.Get("validate"))
+		fieldRules, err := r.TagRules(f.Name, f.Tag.Get("validate"))
 		if err != nil {
 			return err
 		}
@@ -96,10 +95,9 @@ func validateField(fieldValue reflect.Value, rules r.FieldRules) (r.ValidationEr
 	}
 }
 
-// валидирует вложенную структуру
+// валидирует вложенную структуру.
 func validateStructF(fieldValue reflect.Value, _ r.FieldRules) (r.ValidationErrors, error) {
 	err := validateStruct(fieldValue)
-
 	if err != nil {
 		var e r.ValidationErrors
 		if errors.As(err, &e) {
@@ -112,7 +110,7 @@ func validateStructF(fieldValue reflect.Value, _ r.FieldRules) (r.ValidationErro
 	return nil, nil
 }
 
-// валидирует slice или массив
+// валидирует slice или массив.
 func validateSlice(fieldValue reflect.Value, rules r.FieldRules) (r.ValidationErrors, error) {
 	ln := fieldValue.Len()
 	if ln < 1 {
@@ -143,13 +141,12 @@ func validateSlice(fieldValue reflect.Value, rules r.FieldRules) (r.ValidationEr
 }
 
 // валидируем поле со значение fieldValue, согласно правил описанных fieldRules.
-func validateValue(fieldValue reflect.Value, fieldRules rules.FieldRules) (rules.ValidationErrors, error) {
-	var errFields = rules.ValidationErrors{}
-
+func validateValue(fieldValue reflect.Value, fieldRules r.FieldRules) (r.ValidationErrors, error) {
+	var errFields r.ValidationErrors
 	// перебираем все правила
 	for _, rule := range fieldRules.Rules {
 		// получаем функцию валидации.
-		vf, err := rules.ValidationFunction(fieldValue.Kind(), rule.Name)
+		vf, err := r.ValidationFunction(fieldValue.Kind(), rule.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +158,7 @@ func validateValue(fieldValue reflect.Value, fieldRules rules.FieldRules) (rules
 			continue
 		}
 		// если ошибка валидации, сохраняем ее в массив ошибок валидации.
-		var e rules.ValidationError
+		var e r.ValidationError
 		if errors.As(err, &e) {
 			e.Field = fieldRules.FieldName
 			errFields = append(errFields, e)

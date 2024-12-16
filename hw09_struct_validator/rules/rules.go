@@ -156,7 +156,7 @@ func ValidationFunction(kind reflect.Kind, rule string) (Validator, error) {
 }
 
 // получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName.
-func RulesByTag(fieldName string, fieldTag string) (FieldRules, error) {
+func TagRules(fieldName string, fieldTag string) (FieldRules, error) {
 	rls, err := parseRulesTag(fieldTag)
 	if err != nil {
 		return FieldRules{

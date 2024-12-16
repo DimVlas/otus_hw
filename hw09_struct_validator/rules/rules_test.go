@@ -112,7 +112,8 @@ func TestRulesByTag(t *testing.T) {
 				Rules: []RuleInfo{
 					{Name: "rule1", Cond: "condition1"},
 					{Name: "rule2", Cond: "condition2"},
-				}},
+				},
+			},
 			err:  nil,
 			mess: "should no error for tag with two rule",
 		},
@@ -122,7 +123,8 @@ func TestRulesByTag(t *testing.T) {
 			tag:   "|",
 			exp: FieldRules{
 				FieldName: "field",
-				Rules:     []RuleInfo{}},
+				Rules:     []RuleInfo{},
+			},
 			err:  ErrEmptyRule,
 			mess: "",
 		},
@@ -132,7 +134,8 @@ func TestRulesByTag(t *testing.T) {
 			tag:   "rule:cond|rule",
 			exp: FieldRules{
 				FieldName: "field",
-				Rules:     []RuleInfo{}},
+				Rules:     []RuleInfo{},
+			},
 			err:  ErrUnknowRule,
 			mess: "",
 		},
@@ -140,7 +143,7 @@ func TestRulesByTag(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			r, err := RulesByTag(test.field, test.tag)
+			r, err := TagRules(test.field, test.tag)
 
 			require.Equal(t, test.exp, r, test.mess)
 
