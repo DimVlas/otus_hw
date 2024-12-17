@@ -2,7 +2,6 @@ package hw09structvalidator
 
 import (
 	"errors"
-	"log"
 	"reflect"
 
 	r "github.com/DimVlas/otus_hw/hw09_struct_validator/rules"
@@ -58,7 +57,6 @@ func validateStruct(v reflect.Value) error {
 		if err != nil {
 			return err
 		}
-		log.Println(fieldRules.Rules)
 		// если нет правил, то и проверять нечего.
 		if len(fieldRules.Rules) < 1 {
 			continue
@@ -86,7 +84,15 @@ func validateField(fieldValue reflect.Value, rules r.FieldRules) (r.ValidationEr
 	case reflect.Slice, reflect.Array:
 		return validateSlice(fieldValue, rules)
 	case reflect.Struct:
-		if len(rules.Rules) == 1 && rules.Rules[0].Name == "nested" {
+		var nested bool
+		for _, r := range rules.Rules {
+			if r.Name == "nested" {
+				nested = true
+				break
+			}
+		}
+
+		if nested {
 			return validateStructF(fieldValue, rules)
 		}
 		return nil, nil

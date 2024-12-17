@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type UserRole string
-
-type EmptyStruct struct{}
-
 // Test the function on different structures and other types.
 type (
+	UserRole string
+
+	EmptyStruct struct{}
+
 	User struct {
 		ID     string `json:"id" validate:"len:36"`
 		Name   string
@@ -27,6 +27,7 @@ type (
 	}
 
 	App struct {
+		Name    string `validate:"min:5"`
 		Version string `validate:"len:5"`
 	}
 
@@ -40,6 +41,25 @@ type (
 		Code int    `validate:"in:200,404,500"`
 		Body string `json:"omitempty"`
 	}
+
+	Product struct {
+		Price float32 `validate:"min:1"`
+		Name  string  `validate:"len:10"`
+	}
+
+	UserResponses struct {
+		User      User `validate:"min:1|nested"`
+		Responses []Response
+	}
+
+	UserTags struct {
+		User User `validate:"min:1"`
+		Tags string
+	}
+	UserApp struct {
+		User User
+		App  App `validate:"nested"`
+	}
 )
 
 var tests = []struct {
@@ -47,6 +67,72 @@ var tests = []struct {
 	in          interface{}
 	expectedErr error
 }{
+	{
+		name: "validate_slice_err",
+		in: struct {
+			Codes []int `validate:"len:5"`
+		}{
+			Codes: []int{1, 2, 3},
+		},
+		expectedErr: fmt.Errorf("'len' %w", rules.ErrUnknowRule),
+	},
+	{
+		name: "validate_nested_struct_slice_err_validation",
+		in: UserResponses{
+			User: User{
+				ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
+				Name:   "User1",
+				Age:    33,
+				Email:  "User1@mail.com",
+				Role:   "admin",
+				Phones: []string{"1234567890", "9876543210"},
+				meta:   json.RawMessage(``),
+			},
+			Responses: []Response{},
+		},
+		expectedErr: rules.ValidationErrors{
+			rules.ValidationError{
+				Field: "Phones",
+				Err:   fmt.Errorf("%w 11", rules.ErrStrLenNotEqual),
+			},
+			rules.ValidationError{
+				Field: "Phones",
+				Err:   fmt.Errorf("%w 11", rules.ErrStrLenNotEqual),
+			},
+		},
+	},
+	{
+		name: "validate_nested_struct",
+		in: UserResponses{
+			User: User{
+				ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
+				Name:   "User1",
+				Age:    33,
+				Email:  "User1@mail.com",
+				Role:   "admin",
+				Phones: []string{"12345678901", "98765432101"},
+				meta:   json.RawMessage(``),
+			},
+			Responses: []Response{},
+		},
+		expectedErr: nil,
+	},
+	{
+		name: "validate_no_validate_nested_struct",
+		in: UserTags{
+			User: User{
+				ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
+				Name:   "User1",
+				Age:    33,
+				Email:  "User1@mail.com",
+				Role:   "admin",
+				Phones: []string{"12345678901", "98765432101"},
+				meta:   json.RawMessage(``),
+			},
+			Tags: "",
+		},
+		expectedErr: nil,
+	},
 	{
 		name:        "validate_struct_nil",
 		in:          nil,
@@ -74,7 +160,7 @@ var tests = []struct {
 	{
 		name: "validate_field_private",
 		in: struct {
-			field string `validate:"rule:cond|rule"`
+			field string `validate:"rule:cond"`
 		}{
 			field: "qwert",
 		},
@@ -90,7 +176,7 @@ var tests = []struct {
 		expectedErr: nil,
 	},
 	{
-		name: "validate_err_validate_func",
+		name: "validate_err_unknow_rule_func",
 		in: struct {
 			Field string `validate:"rule:cond"`
 		}{
@@ -115,7 +201,7 @@ var tests = []struct {
 			Age:    51,
 			Email:  "User1@mail.com",
 			Role:   "admin",
-			Phones: []string{"12345678901", "98765432101"},
+			Phones: []string{},
 			meta:   json.RawMessage(``),
 		},
 		expectedErr: rules.ValidationErrors{
@@ -125,75 +211,30 @@ var tests = []struct {
 			},
 		},
 	},
-	// {
-	// 	in: Response{
-	// 		Code: 200,
-	// 		Body: "{}",
-	// 	},
-	// 	expectedErr: nil,
-	// },
-	// {
-	// 	in: Response{
-	// 		Code: 100,
-	// 		Body: "{}",
-	// 	},
-	// 	expectedErr: rules.ValidationErrors{
-	// 		rules.ValidationError{
-	// 			Field: "Code",
-	// 			Err:   fmt.Errorf("%w 200,404,500", rules.ErrIntNotInList),
-	// 		},
-	// 	},
-	// },
-	// {
-	// 	in:          Token{},
-	// 	expectedErr: nil,
-	// },
-	// {
-	// 	in: App{
-	// 		Version: "qwert",
-	// 	},
-	// 	expectedErr: nil,
-	// },
-	// {
-	// 	in: App{
-	// 		Version: "qwerty",
-	// 	},
-	// 	expectedErr: rules.ValidationErrors{
-	// 		rules.ValidationError{
-	// 			Field: "Version",
-	// 			Err:   fmt.Errorf("%w 5", rules.ErrStrLenNotEqual),
-	// 		},
-	// 	},
-	// },
-	// {
-	// 	in: User{
-	// 		ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
-	// 		Name:   "User1",
-	// 		Age:    16,
-	// 		Email:  "User1@mail.com.dot",
-	// 		Role:   "employee",
-	// 		Phones: []string{"12345678901", "9876543210"},
-	// 		meta:   json.RawMessage(``),
-	// 	},
-	// 	expectedErr: rules.ValidationErrors{
-	// 		rules.ValidationError{
-	// 			Field: "Age",
-	// 			Err:   fmt.Errorf("%w 18", rules.ErrIntCantBeLess),
-	// 		},
-	// 		rules.ValidationError{
-	// 			Field: "Email",
-	// 			Err:   fmt.Errorf("%w %s", rules.ErrStrReExpNotMatch, "'^\\w+@\\w+\\.\\w+$'"),
-	// 		},
-	// 		rules.ValidationError{
-	// 			Field: "Role",
-	// 			Err:   fmt.Errorf("%w %s", rules.ErrStrNotInList, "'admin,stuff'"),
-	// 		},
-	// 		rules.ValidationError{
-	// 			Field: "Phones",
-	// 			Err:   fmt.Errorf("%w %v", rules.ErrStrLenNotEqual, 11),
-	// 		},
-	// 	},
-	// },
+	{
+		name: "validate_valid_check_arr",
+		in: User{
+			ID:     "pD4tNeo-t0OGE_ooz3WqxAcyFeuF6AUk6mQf",
+			Name:   "User1",
+			Age:    25,
+			Email:  "User1@mail.dot",
+			Role:   "admin",
+			Phones: []string{"12345678901", "98765432101"},
+			meta:   json.RawMessage(``),
+		},
+		expectedErr: nil,
+	},
+	{
+		name: "validate_nested_structerr_err",
+		in: UserApp{
+			User: User{},
+			App: App{
+				Name:    "App1",
+				Version: "qwert",
+			},
+		},
+		expectedErr: fmt.Errorf("'min' %w", rules.ErrUnknowRule),
+	},
 }
 
 func TestValidate(t *testing.T) {
