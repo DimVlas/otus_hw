@@ -139,6 +139,19 @@ func TestRulesByTag(t *testing.T) {
 			err:  ErrUnknowRule,
 			mess: "",
 		},
+		{
+			name:  "struct_nested_tag",
+			field: "field",
+			tag:   "nested",
+			exp: FieldRules{
+				FieldName: "field",
+				Rules: []RuleInfo{
+					{Name: "nested", Cond: ""},
+				},
+			},
+			err:  nil,
+			mess: "",
+		},
 	}
 
 	for _, test := range tests {

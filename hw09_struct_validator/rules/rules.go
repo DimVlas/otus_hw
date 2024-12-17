@@ -157,7 +157,7 @@ func ValidationFunction(kind reflect.Kind, rule string) (Validator, error) {
 
 // получает из тэга fieldTag струтуру FieldRules с правилами валидации для поля с именем fieldName.
 func TagRules(fieldName string, fieldTag string) (FieldRules, error) {
-	rls, err := parseRulesTag(fieldTag)
+	rls, err := parseTagRules(fieldTag)
 	if err != nil {
 		return FieldRules{
 			FieldName: fieldName,
@@ -173,7 +173,7 @@ func TagRules(fieldName string, fieldTag string) (FieldRules, error) {
 
 // парсит полученную строку, возвращая массив структур с описанием правил проверки.
 // ожидается, что строка имеет вид 'правило:условие|правило:условие|...'.
-func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
+func parseTagRules(rulesTag string) ([]RuleInfo, error) {
 	rulesTag = strings.Trim(rulesTag, " ")
 	if rulesTag == "" {
 		return []RuleInfo{}, nil
@@ -188,12 +188,18 @@ func parseRulesTag(rulesTag string) ([]RuleInfo, error) {
 		if len(r) == 0 {
 			return []RuleInfo{}, ErrEmptyRule
 		}
+
 		rule := strings.Split(r, ":")
-		if len(rule) != 2 {
-			return []RuleInfo{}, ErrUnknowRule
+		if len(rule) == 2 {
+			ri = append(ri, RuleInfo{Name: rule[0], Cond: rule[1]})
+			continue
+		}
+		if len(rule) == 1 && rule[0] == "nested" {
+			ri = append(ri, RuleInfo{Name: rule[0], Cond: ""})
+			continue
 		}
 
-		ri = append(ri, RuleInfo{Name: rule[0], Cond: rule[1]})
+		return []RuleInfo{}, ErrUnknowRule
 	}
 
 	return ri, nil
