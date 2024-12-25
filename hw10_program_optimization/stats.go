@@ -34,7 +34,7 @@ func domainsStat(r io.Reader, domain string) (DomainStat, error) {
 	for {
 		line, err := rd.ReadBytes('\n')
 		if err != nil {
-			if !errors.Is(err, io.EOF) {
+			if errors.Is(err, io.EOF) {
 				br = true
 			} else {
 				return nil, err
