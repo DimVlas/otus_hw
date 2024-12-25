@@ -40,7 +40,7 @@ var (
 var (
 	// целое не может быть меньше условия.
 	ErrIntCantBeLess = errors.New("cannot be less")
-	// целое не содержит совпадений с регулярным выражением.
+	// целое не может быть меньше больше.
 	ErrIntCantBeGreater = errors.New("cannot be greater")
 	// целое на входит в список.
 	ErrIntNotInList = errors.New("int is not in the list")
@@ -72,11 +72,10 @@ func (v ValidationErrors) Error() string {
 		return ""
 	}
 
-	return func() string {
-		s := strings.Builder{}
-		for _, e := range v {
-			s.WriteString(fmt.Sprintf("field %s: %s\n", e.Field, e.Err.Error()))
-		}
-		return s.String()
-	}()
+	s := strings.Builder{}
+	for _, e := range v {
+		s.WriteString(fmt.Sprintf("field %s: %s\n", e.Field, e.Err.Error()))
+	}
+
+	return s.String()
 }

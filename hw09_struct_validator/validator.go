@@ -84,16 +84,10 @@ func validateField(fieldValue reflect.Value, rules r.FieldRules) (r.ValidationEr
 	case reflect.Slice, reflect.Array:
 		return validateSlice(fieldValue, rules)
 	case reflect.Struct:
-		var nested bool
 		for _, r := range rules.Rules {
 			if r.Name == "nested" {
-				nested = true
-				break
+				return validateStructF(fieldValue, rules)
 			}
-		}
-
-		if nested {
-			return validateStructF(fieldValue, rules)
 		}
 		return nil, nil
 	default:
