@@ -1,9 +1,12 @@
+//go:build !bench
 // +build !bench
 
 package hw10programoptimization
 
 import (
+	"archive/zip"
 	"bytes"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,4 +39,29 @@ func TestGetDomainStat(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
 	})
+}
+
+func BenchmarkGetDomainStat(b *testing.B) {
+	z, err := zip.OpenReader("testdata/users.dat.zip")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer z.Close()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		func() {
+			b.StopTimer()
+			r, err := z.File[0].Open()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			defer r.Close()
+
+			b.StartTimer()
+			_, _ = GetDomainStat(r, "biz")
+		}()
+	}
 }

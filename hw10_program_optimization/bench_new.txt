@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/DimVlas/otus_hw/hw10_program_optimization
+cpu: AMD Ryzen 5 3500X 6-Core Processor             
+BenchmarkGetDomainStat-6   	       6	 180000872 ns/op	29449422 B/op	  723161 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179475854 ns/op	29449080 B/op	  723159 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179211242 ns/op	29449562 B/op	  723161 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179568154 ns/op	29449693 B/op	  723162 allocs/op
+BenchmarkGetDomainStat-6   	       6	 183618851 ns/op	29449421 B/op	  723160 allocs/op
+BenchmarkGetDomainStat-6   	       6	 186144564 ns/op	29449717 B/op	  723163 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179541616 ns/op	29449549 B/op	  723161 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179762574 ns/op	29449098 B/op	  723159 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179707295 ns/op	29449813 B/op	  723162 allocs/op
+BenchmarkGetDomainStat-6   	       6	 179366661 ns/op	29449816 B/op	  723162 allocs/op
+PASS
+ok  	github.com/DimVlas/otus_hw/hw10_program_optimization	12.673s
